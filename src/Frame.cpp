@@ -345,6 +345,37 @@ void DrawFrameWindow() {
   //  printf("Out of DrawFrameWindow!\n");
 }
 
+void DrawLEDs(SDL_Rect srect, Uint32 mybluez)
+{
+    srect.x = 4;
+    srect.y = 22;
+    srect.w = STATUS_PANEL_W - 8;
+    srect.h = STATUS_PANEL_H - 25;
+    SDL_FillRect(g_hStatusSurface, &srect, mybluez);  // clear
+
+    char leds[2] = "\x64";
+#define LEDS  1
+    int  iDrive1Status = DISK_STATUS_OFF;
+    int  iDrive2Status = DISK_STATUS_OFF;
+    int iHDDStatus = DISK_STATUS_OFF;
+
+    //    bool bCaps   = KeybGetCapsStatus();
+    DiskGetLightStatus(&iDrive1Status,&iDrive2Status);
+    iHDDStatus = HD_GetStatus();
+
+    leds[0] = LEDS + iDrive1Status;
+    //    printf("Leds are %d\n",leds[0]);
+    font_print(8, 23, leds, g_hStatusSurface, 4, 2.7);
+
+    leds[0] = LEDS + iDrive2Status;
+    font_print(40, 23, leds, g_hStatusSurface, 4, 2.7);
+
+    leds[0] = LEDS + iHDDStatus;
+    font_print(71, 23, leds, g_hStatusSurface, 4, 2.7);
+
+    if(iDrive1Status | iDrive2Status | iHDDStatus) g_iStatusCycle = SHOW_CYCLES; // show status panel
+}
+
 //===========================================================================
 void DrawStatusArea(
     /*HDC passdc,*/ int drawflags) { // status area not used now (yet?) --bb
@@ -422,35 +453,9 @@ void DrawStatusArea(
     //               0, 256);
     g_iStatusCycle = SHOW_CYCLES; // start cycle for panel showing
   }
-  if (drawflags & DRAW_LEDS) {
-    srect.x = 4;
-    srect.y = 22;
-    srect.w = STATUS_PANEL_W - 8;
-    srect.h = STATUS_PANEL_H - 25;
-    SDL_FillRect(g_hStatusSurface, &srect, mybluez); // clear
-
-    char leds[2] = "\x64";
-#define LEDS 1
-    int iDrive1Status = DISK_STATUS_OFF;
-    int iDrive2Status = DISK_STATUS_OFF;
-    int iHDDStatus = DISK_STATUS_OFF;
-
-    //    bool bCaps   = KeybGetCapsStatus();
-    DiskGetLightStatus(&iDrive1Status, &iDrive2Status);
-    iHDDStatus = HD_GetStatus();
-
-    leds[0] = LEDS + iDrive1Status;
-    //    printf("Leds are %d\n",leds[0]);
-    font_print(8, 23, leds, g_hStatusSurface, 4, 2.7);
-
-    leds[0] = LEDS + iDrive2Status;
-    font_print(40, 23, leds, g_hStatusSurface, 4, 2.7);
-
-    leds[0] = LEDS + iHDDStatus;
-    font_print(71, 23, leds, g_hStatusSurface, 4, 2.7);
-
-    if (iDrive1Status | iDrive2Status | iHDDStatus)
-      g_iStatusCycle = SHOW_CYCLES; // show status panel
+  if (drawflags & DRAW_LEDS)
+  {
+    DrawLEDs(srect, mybluez);
   }
   //  surface_fader(g_hStatusSurface, nowleds, nowleds, nowleds, -1, 0);
   /*    if (drawflags & DRAW_TITLE)
