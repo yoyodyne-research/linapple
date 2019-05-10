@@ -318,27 +318,40 @@ bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
   double facy = double(g_ScreenHeight) / double(SCREEN_HEIGHT);
 
   SDL_Surface *tempSurface = NULL;
-  if (!g_WindowResized) {
-    if (g_nAppMode == MODE_LOGO)
-      tempSurface = g_hLogoBitmap; // use logobitmap
-    else
-      tempSurface = g_hDeviceBitmap;
-  } else
-    tempSurface = g_origscreen;
+  if(!g_WindowResized) {
+    if(g_nAppMode == MODE_LOGO) tempSurface = g_hLogoBitmap;  // use logobitmap
+      else tempSurface = g_hDeviceBitmap;
+  }
+  else tempSurface = g_origscreen;
 
-  if (tempSurface == NULL)
-    tempSurface = screen; // use screen, if none available
+  if(tempSurface == NULL)
+    tempSurface = screen;  // use screen, if none available
 
-  my_screen =
-      SDL_CreateRGBSurface(SDL_SWSURFACE, tempSurface->w, tempSurface->h,
-                           tempSurface->format->BitsPerPixel, 0, 0, 0, 0);
-  if (tempSurface->format->palette && my_screen->format->palette)
-    SDL_SetColors(my_screen, tempSurface->format->palette->colors, 0,
-                  tempSurface->format->palette->ncolors);
+  my_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, tempSurface->w, tempSurface->h, tempSurface->format->BitsPerPixel, 0, 0, 0, 0);
+  if(tempSurface->format->palette && my_screen->format->palette)
+    SDL_SetColors(my_screen, tempSurface->format->palette->colors,
+            0, tempSurface->format->palette->ncolors);
 
-  surface_fader(my_screen, 0.2F, 0.2F, 0.2F, -1,
-                0); // fade it out to 20% of normal
+  surface_fader(my_screen, 0.2F, 0.2F, 0.2F, -1, 0);  // fade it out to 20% of normal
   SDL_BlitSurface(tempSurface, NULL, my_screen, NULL);
+
+  while(true)
+  {
+
+    SDL_BlitSurface(my_screen, NULL, screen, NULL);    // show background
+
+    font_print_centered(sx/2 ,5*facy , incoming_dir, screen, 1*facx, 1*facy);
+    if (slot == 6) font_print_centered(sx/2,20*facy,"Choose image for floppy 140KB drive", screen, 1*facx, 1*facy);
+    else
+      if (slot == 7) font_print_centered(sx/2,20*facy,"Choose image for Hard Disk", screen, 1*facx, 1*facy);
+    else
+      if (slot == 5) font_print_centered(sx/2,20*facy,"Choose image for floppy 800KB drive", screen, 1*facx, 1*facy);
+    else
+      if (slot == 1) font_print_centered(sx/2,20*facy,"Select file name for saving snapshot", screen, 1*facx, 1*facy);
+    else
+      if (slot == 0) font_print_centered(sx/2,20*facy,"Select snapshot file name for loading", screen, 1*facx, 1*facy);
+
+    font_print_centered(sx/2,30*facy, "Press ENTER to choose, or ESC to cancel",screen, 1*facx, 1*facy);
 
   while (true) {
 
@@ -404,51 +417,43 @@ bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
         // print file name with enlarged font
         char ch;
         ch = 0;
-        if (strlen(tmp) > MAX_FILENAME) {
-          ch = tmp[MAX_FILENAME];
-          tmp[MAX_FILENAME] = 0;
-        } // cut-off too long string
-        font_print(4, TOPX + (i - first_file) * 15 * facy, tmp, screen,
-                   1.7 * facx, 1.5 * facy); // show name
-        font_print(sx - 70 * facx, TOPX + (i - first_file) * 15 * facy, siz,
-                   screen, 1.7 * facx, 1.5 * facy); // show info (dir or size)
-        if (ch)
-          tmp[MAX_FILENAME] = ch; // restore cut-off char
+        if(strlen(tmp) > MAX_FILENAME) { ch = tmp[MAX_FILENAME]; tmp[MAX_FILENAME] = 0;} //cut-off too long string
+        font_print(4, TOPX + (i - first_file) * 15 * facy, tmp, screen, facx, facy); // show name
+        font_print(sx - 70 * facx, TOPX + (i - first_file) * 15 * facy, siz, screen, facx, facy);// show info (dir or size)
+        if(ch) tmp[MAX_FILENAME] = ch; //restore cut-off char
 
-      }    /* if */
-      i++; // next item
-    }      /* while */
+      } /* if */
+      i++;    // next item
+    } /* while */
 
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    // draw rectangles
-    rectangle(screen, 0, TOPX - 5, sx, 320 * facy,
-              SDL_MapRGB(screen->format, 255, 255, 255));
-    rectangle(screen, 480 * facx, TOPX - 5, 0, 320 * facy,
-              SDL_MapRGB(screen->format, 255, 255, 255));
+/////////////////////////////////////////////////////////////////////////////////////////////
+// draw rectangles
+  rectangle(screen, 0, TOPX - 5, sx, 320*facy, SDL_MapRGB(screen->format, 255, 255, 255));
+  rectangle(screen, 480*facx, TOPX - 5, 0, 320*facy, SDL_MapRGB(screen->format, 255, 255, 255));
 
-    SDL_Flip(screen);     // show the screen
-    SDL_Delay(KEY_DELAY); // wait some time to be not too fast
+  SDL_Flip(screen);  // show the screen
+  SDL_Delay(KEY_DELAY);  // wait some time to be not too fast
 
-    //////////////////////////////////
-    // Wait for keypress
-    //////////////////////////////////
-    SDL_Event event; // event
-    Uint8 *keyboard; // key state
+  //////////////////////////////////
+  // Wait for keypress
+  //////////////////////////////////
+  SDL_Event event;  // event
+  Uint8 *keyboard;  // key state
 
-    event.type = 0;
-    while (event.type != SDL_KEYDOWN) { // wait for key pressed
-      // GPH Honor quit even if we're in the diskchoose state.
-      if (SDL_QUIT == event.type) {
-        files.Delete();
-        sizes.Delete();
-        SDL_FreeSurface(my_screen);
+  event.type = 0;
+  while(event.type != SDL_KEYDOWN) {  // wait for key pressed
+        // GPH Honor quit even if we're in the diskchoose state.
+        if (SDL_QUIT == event.type) {
+      files.Delete();
+      sizes.Delete();
+      SDL_FreeSurface(my_screen);
 
-        SDL_PushEvent(&event); // push quit event
-        return false;
-      }
-      SDL_Delay(10);
-      SDL_PollEvent(&event);
-    }
+        SDL_PushEvent(&event);// push quit event
+            return false;
+        }
+    SDL_Delay(10);
+    SDL_PollEvent(&event);
+  }
 
     // control cursor
     keyboard = SDL_GetKeyState(

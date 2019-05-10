@@ -567,18 +567,14 @@ void FrameShowHelpScreen(int sx,
   double facx = double(g_ScreenWidth) / double(SCREEN_WIDTH);
   double facy = double(g_ScreenHeight) / double(SCREEN_HEIGHT);
 
-  font_print_centered(sx / 2, int(5 * facy), (char *)HelpStrings[0], screen,
-                      1.5 * facx, 1.3 * facy);
-  font_print_centered(sx / 2, int(20 * facy), (char *)HelpStrings[1], screen,
-                      1.3 * facx, 1.2 * facy);
-  font_print_centered(sx / 2, int(30 * facy), (char *)HelpStrings[2], screen,
-                      1.2 * facx, 1.0 * facy);
+  font_print_centered(sx/2, int(5*facy), (char*)HelpStrings[0], screen, facx, facy);
+  font_print_centered(sx/2, int(20*facy), (char*)HelpStrings[1], screen, facx, facy);
+  font_print_centered(sx/2, int(30*facy), (char*)HelpStrings[2], screen, facx, facy);
 
   int Help_TopX = int(45 * facy);
   int i;
-  for (i = 3; i < 25; i++)
-    font_print(4, Help_TopX + (i - 3) * 15 * facy, (char *)HelpStrings[i],
-               screen, 1.5 * facx, 1.5 * facy); // show keys
+  for(i =  3; i < 25; i++)
+    font_print(4, Help_TopX + (i - 3) * 15 * facy, (char*)HelpStrings[i], screen, facx, facy); // show keys
 
   // show frames
   rectangle(screen, 0, Help_TopX - 5, /*SCREEN_WIDTH*/ g_ScreenWidth - 1,

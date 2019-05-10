@@ -122,22 +122,15 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot, char **filename,
   surface_fader(my_screen, 0.2F, 0.2F, 0.2F, -1,
                 0); // fade it out to 20% of normal
   SDL_BlitSurface(tempSurface, NULL, my_screen, NULL);
-  SDL_BlitSurface(my_screen, NULL, screen, NULL); // show background
-                                                  //  ch = 0;
-#define NORMAL_LENGTH 60
-  if (strlen(ftp_dir) > NORMAL_LENGTH) {
-    ch = ftp_dir[NORMAL_LENGTH];
-    ftp_dir[NORMAL_LENGTH] = 0;
-  } // cut-off too long string
-  font_print_centered(sx / 2, 5 * facy, ftp_dir, screen, 1.5 * facx,
-                      1.3 * facy);
-  if (ch)
-    ftp_dir[NORMAL_LENGTH] = ch; // restore cut-off char
+  SDL_BlitSurface(my_screen, NULL, screen, NULL);    // show background
+//  ch = 0;
+  #define  NORMAL_LENGTH 60
+  if(strlen(ftp_dir) > NORMAL_LENGTH) { ch = ftp_dir[NORMAL_LENGTH]; ftp_dir[NORMAL_LENGTH] = 0;} //cut-off too long string
+  font_print_centered(sx/2 ,5 * facy , ftp_dir, screen, facx, facy);
+  if(ch) ftp_dir[NORMAL_LENGTH] = ch; //restore cut-off char  
 
-  font_print_centered(sx / 2, 20 * facy,
-                      "Connecting to FTP server... Please wait.", screen,
-                      1 * facx, 1 * facy);
-  SDL_Flip(screen); // show the screen
+  font_print_centered(sx/2,20 * facy,"Connecting to FTP server... Please wait.", screen, facx, facy);
+  SDL_Flip(screen);  // show the screen
 
   bool OKI;
 #ifndef _WIN32
@@ -154,12 +147,11 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot, char **filename,
     OKI = ftp_get(ftp_dir, ftpdirpath); // get ftp dir listing
 #endif
 
-  if (OKI) { // error
-    printf("Failed getting FTP directory %s to %s\n", ftp_dir, ftpdirpath);
-    font_print_centered(sx / 2, 30 * facy, "Failure. Press any key!", screen,
-                        1.4 * facx, 1.1 * facy);
-    SDL_Flip(screen);     // show the screen
-    SDL_Delay(KEY_DELAY); // wait some time to be not too fast
+  if(OKI) {  // error
+    printf("Failed getting FTP directory %s to %s\n",ftp_dir,ftpdirpath);  
+    font_print_centered(sx/2,30 * facy, "Failure. Press any key!",screen, facx, facy);
+    SDL_Flip(screen);  // show the screen
+    SDL_Delay(KEY_DELAY);  // wait some time to be not too fast
     //////////////////////////////////
     // Wait for keypress
     //////////////////////////////////
@@ -264,37 +256,25 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot, char **filename,
   // Show all directories (first) and files then
   //  char *tmp;
   char *siz = NULL;
-  //  int i;
+//  int i;
 
-  while (true) {
-    SDL_BlitSurface(my_screen, NULL, screen, NULL); // show background
-    font_print_centered(sx / 2, 5 * facy, ftp_dir, screen, 1.5 * facx,
-                        1.3 * facy);
-    if (slot == 6)
-      font_print_centered(sx / 2, 20 * facy,
-                          "Choose image for floppy 140KB drive", screen,
-                          1 * facx, 1 * facy);
-    else if (slot == 7)
-      font_print_centered(sx / 2, 20 * facy, "Choose image for Hard Disk",
-                          screen, 1 * facx, 1 * facy);
-    else if (slot == 5)
-      font_print_centered(sx / 2, 20 * facy,
-                          "Choose image for floppy 800KB drive", screen,
-                          1 * facx, 1 * facy);
-    else if (slot == 1)
-      font_print_centered(sx / 2, 20 * facy,
-                          "Select file name for saving snapshot", screen,
-                          1 * facx, 1 * facy);
-    else if (slot == 0)
-      font_print_centered(sx / 2, 20 * facy,
-                          "Select snapshot file name for loading", screen,
-                          1 * facx, 1 * facy);
+  while(true)
+  {
+    SDL_BlitSurface(my_screen, NULL, screen, NULL);    // show background
+    font_print_centered(sx/2 ,5 * facy , ftp_dir, screen, 1.5 * facx, 1.3 * facy);
+    if (slot == 6) font_print_centered(sx/2,20 * facy,"Choose image for floppy 140KB drive", screen, 1 * facx, 1 * facy);
+    else
+      if (slot == 7) font_print_centered(sx/2,20 * facy,"Choose image for Hard Disk", screen, 1 * facx, 1 * facy);
+    else
+      if (slot == 5) font_print_centered(sx/2,20 * facy,"Choose image for floppy 800KB drive", screen, 1 * facx, 1 * facy);
+    else
+      if (slot == 1) font_print_centered(sx/2,20 * facy,"Select file name for saving snapshot", screen, 1 * facx, 1 * facy);
+    else
+      if (slot == 0) font_print_centered(sx/2,20 * facy,"Select snapshot file name for loading", screen, 1 * facx, 1 * facy);
 
-    font_print_centered(sx / 2, 30 * facy,
-                        "Press ENTER to choose, or ESC to cancel", screen,
-                        1.4 * facx, 1.1 * facy);
+    font_print_centered(sx/2,30 * facy, "Press ENTER to choose, or ESC to cancel",screen, 1 * facx, 1 * facy);
 
-    files.Rewind(); // from start
+    files.Rewind();  // from start
     sizes.Rewind();
     i = 0;
 
@@ -325,35 +305,33 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot, char **filename,
 
         // print file name with enlarged font
         ch = 0;
-        if (strlen(tmp) > 46) {
-          ch = tmp[46];
-          tmp[46] = 0;
-        } // cut-off too long string
-        font_print(4, TOPX + (i - first_file) * 15 * facy, tmp, screen,
-                   1.7 * facx, 1.5 * facy); // show name
-        font_print(sx - 70 * facx, TOPX + (i - first_file) * 15 * facy, siz,
-                   screen, 1.7 * facx, 1.5 * facy); // show info (dir or size)
-        if (ch)
-          tmp[46] = ch; // restore cut-off char
-      }                 /* if */
-      i++;              // next item
-    }                   /* while */
+        if(strlen(tmp) > 46) { ch = tmp[46]; tmp[46] = 0;} //cut-off too long string
+        font_print(4, TOPX + (i - first_file) * 15 * facy, tmp, screen, facx, facy); // show name
+        font_print(sx - 70*facx, TOPX + (i - first_file) * 15 * facy, siz, screen, facx, facy);// show info (dir or size)
+        if(ch) tmp[46] = ch; //restore cut-off char
+      } /* if */
+      i++;    // next item
+    } /* while */
 
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    // draw rectangles
-    rectangle(screen, 0, TOPX - 5, g_ScreenWidth, 320 * facy,
-              SDL_MapRGB(screen->format, 255, 255, 255));
-    rectangle(screen, 480 * facx, TOPX - 5, 0, 320 * facy,
-              SDL_MapRGB(screen->format, 255, 255, 255));
+/////////////////////////////////////////////////////////////////////////////////////////////
+// draw rectangles
+  rectangle(screen, 0, TOPX - 5, g_ScreenWidth, 320 * facy, SDL_MapRGB(screen->format, 255, 255, 255));
+  rectangle(screen, 480 * facx, TOPX - 5, 0, 320 * facy, SDL_MapRGB(screen->format, 255, 255, 255));
 
-    SDL_Flip(screen);     // show the screen
-    SDL_Delay(KEY_DELAY); // wait some time to be not too fast
+  SDL_Flip(screen);  // show the screen
+  SDL_Delay(KEY_DELAY);  // wait some time to be not too fast
 
-    //////////////////////////////////
-    // Wait for keypress
-    //////////////////////////////////
-    SDL_Event event; // event
-    Uint8 *keyboard; // key state
+  //////////////////////////////////
+  // Wait for keypress
+  //////////////////////////////////
+  SDL_Event event;  // event
+  Uint8 *keyboard;  // key state
+
+  event.type = SDL_QUIT;
+  while(event.type != SDL_KEYDOWN) {  // wait for key pressed
+        SDL_Delay(10);
+        SDL_PollEvent(&event);
+  }
 
     event.type = SDL_QUIT;
     while (event.type != SDL_KEYDOWN) { // wait for key pressed
