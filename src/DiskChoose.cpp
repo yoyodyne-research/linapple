@@ -18,6 +18,7 @@ find out more.
 #else
 #include "ctype.h"
 #include <dirent.h>
+#include <math.h>
 #include <stddef.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -111,6 +112,19 @@ bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
    Out:  filename  - chosen file name (or dir name)
     isdir    - if chosen name is a directory
   */
+  
+  const char *const message[] = {
+      "Load state from file",
+      "Save state to file",
+      "",
+      "",
+      "",
+      "Insert image into 800KB floppy drive",
+      "Insert image into 140KB floppy drive",
+      "Choose image for hard disk",
+      0 // sentinel
+  };
+
   /* Surface: */
   SDL_Surface *my_screen; // for background
 
@@ -124,9 +138,10 @@ bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
   int act_file;   // current file
   int first_file; // from which we output files
 
-  printf("Disckchoose! We are here: %s\n", incoming_dir);
-//  files.Delete();
-//  sizes.Delete();
+//  std::cerr << "[disk  ] cd " << incoming_dir << std::endl;
+
+//	files.Delete();
+//	sizes.Delete();
 #ifndef _WIN32
   /* POSIX specific routines of reading directory structure */
   DIR *dp;
@@ -314,74 +329,46 @@ bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
   //  int i;
 
   // prepare screen
+  // Compute scaling factor.
   double facx = double(g_ScreenWidth) / double(SCREEN_WIDTH);
   double facy = double(g_ScreenHeight) / double(SCREEN_HEIGHT);
+#ifndef _WIN32
+  // Scale uniformly and integrally.
+  facx = min(facx, facy);
+  facy = facx;
+#endif
 
   SDL_Surface *tempSurface = NULL;
-  if(!g_WindowResized) {
-    if(g_nAppMode == MODE_LOGO) tempSurface = g_hLogoBitmap;  // use logobitmap
-      else tempSurface = g_hDeviceBitmap;
-  }
-  else tempSurface = g_origscreen;
+  if (!g_WindowResized) {
+    if (g_nAppMode == MODE_LOGO)
+      tempSurface = g_hLogoBitmap; // use logobitmap
+    else
+      tempSurface = g_hDeviceBitmap;
+  } else
+    tempSurface = g_origscreen;
 
-  if(tempSurface == NULL)
-    tempSurface = screen;  // use screen, if none available
+  if (tempSurface == NULL)
+    tempSurface = screen; // use screen, if none available
 
-  my_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, tempSurface->w, tempSurface->h, tempSurface->format->BitsPerPixel, 0, 0, 0, 0);
-  if(tempSurface->format->palette && my_screen->format->palette)
-    SDL_SetColors(my_screen, tempSurface->format->palette->colors,
-            0, tempSurface->format->palette->ncolors);
+  my_screen =
+      SDL_CreateRGBSurface(SDL_SWSURFACE, tempSurface->w, tempSurface->h,
+                           tempSurface->format->BitsPerPixel, 0, 0, 0, 0);
+  if (tempSurface->format->palette && my_screen->format->palette)
+    SDL_SetColors(my_screen, tempSurface->format->palette->colors, 0,
+                  tempSurface->format->palette->ncolors);
 
-  surface_fader(my_screen, 0.2F, 0.2F, 0.2F, -1, 0);  // fade it out to 20% of normal
+  surface_fader(my_screen, 0.2F, 0.2F, 0.2F, -1,
+                0); // fade it out to 20% of normal
   SDL_BlitSurface(tempSurface, NULL, my_screen, NULL);
-
-  while(true)
-  {
-
-    SDL_BlitSurface(my_screen, NULL, screen, NULL);    // show background
-
-    font_print_centered(sx/2 ,5*facy , incoming_dir, screen, 1*facx, 1*facy);
-    if (slot == 6) font_print_centered(sx/2,20*facy,"Choose image for floppy 140KB drive", screen, 1*facx, 1*facy);
-    else
-      if (slot == 7) font_print_centered(sx/2,20*facy,"Choose image for Hard Disk", screen, 1*facx, 1*facy);
-    else
-      if (slot == 5) font_print_centered(sx/2,20*facy,"Choose image for floppy 800KB drive", screen, 1*facx, 1*facy);
-    else
-      if (slot == 1) font_print_centered(sx/2,20*facy,"Select file name for saving snapshot", screen, 1*facx, 1*facy);
-    else
-      if (slot == 0) font_print_centered(sx/2,20*facy,"Select snapshot file name for loading", screen, 1*facx, 1*facy);
-
-    font_print_centered(sx/2,30*facy, "Press ENTER to choose, or ESC to cancel",screen, 1*facx, 1*facy);
 
   while (true) {
 
     SDL_BlitSurface(my_screen, NULL, screen, NULL); // show background
 
-    font_print_centered(sx / 2, 5 * facy, incoming_dir, screen, 1.5 * facx,
-                        1.3 * facy);
-    if (slot == 6)
-      font_print_centered(sx / 2, 20 * facy,
-                          "Choose image for floppy 140KB drive", screen,
-                          1 * facx, 1 * facy);
-    else if (slot == 7)
-      font_print_centered(sx / 2, 20 * facy, "Choose image for Hard Disk",
-                          screen, 1 * facx, 1 * facy);
-    else if (slot == 5)
-      font_print_centered(sx / 2, 20 * facy,
-                          "Choose image for floppy 800KB drive", screen,
-                          1 * facx, 1 * facy);
-    else if (slot == 1)
-      font_print_centered(sx / 2, 20 * facy,
-                          "Select file name for saving snapshot", screen,
-                          1 * facx, 1 * facy);
-    else if (slot == 0)
-      font_print_centered(sx / 2, 20 * facy,
-                          "Select snapshot file name for loading", screen,
-                          1 * facx, 1 * facy);
+    if (slot >= 0 && slot < 8)
+      font_print_centered(sx / 2, 5 * facy, message[slot], screen, facx, facy);
 
-    font_print_centered(sx / 2, 30 * facy,
-                        "Press ENTER to choose, or ESC to cancel", screen,
-                        1.4 * facx, 1.1 * facy);
+    font_print_centered(sx / 2, 30 * facy, incoming_dir, screen, facx, facy);
 
     files.Rewind(); // from start
     sizes.Rewind();
@@ -400,60 +387,61 @@ bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
           i < first_file + FILES_IN_SCREEN) { // FILES_IN_SCREEN items on screen
                                               //        char tmp2[80],tmp3[256];
 
-        if (i == act_file) { // show item under cursor (in inverse mode)
+        if (i == act_file) {
+          // highlight active entry
           SDL_Rect r;
           r.x = 2;
           r.y = TOPX + (i - first_file) * 15 * facy - 1;
-          if (strlen(tmp) > 46)
-            r.w = 46 * FONT_SIZE_X /* 6 */ * 1.7 * facx + 2;
-          else
-            r.w = strlen(tmp) * FONT_SIZE_X /* 6 */ * 1.7 * facx +
-                  2; // 6- FONT_SIZE_X
+          r.w = g_ScreenWidth - r.x * 2;
           r.h = 9 * 1.5 * facy;
-          SDL_FillRect(screen, &r,
-                       SDL_MapRGB(screen->format, 255, 0, 0)); // in RED
-        }                                                      /* if */
+          SDL_FillRect(screen, &r, SDL_MapRGB(screen->format, 63, 63, 63));
+        } /* if */
 
-        // print file name with enlarged font
+        // print file name
         char ch;
         ch = 0;
-        if(strlen(tmp) > MAX_FILENAME) { ch = tmp[MAX_FILENAME]; tmp[MAX_FILENAME] = 0;} //cut-off too long string
-        font_print(4, TOPX + (i - first_file) * 15 * facy, tmp, screen, facx, facy); // show name
-        font_print(sx - 70 * facx, TOPX + (i - first_file) * 15 * facy, siz, screen, facx, facy);// show info (dir or size)
-        if(ch) tmp[MAX_FILENAME] = ch; //restore cut-off char
+        if (strlen(tmp) > MAX_FILENAME) {
+          ch = tmp[MAX_FILENAME];
+          tmp[MAX_FILENAME] = 0;
+        } // cut-off too long string
+        font_print(4, TOPX + (i - first_file) * 15 * facy, tmp, screen, facx,
+                   facy); // show name
+        font_print(sx - 70 * facx, TOPX + (i - first_file) * 15 * facy, siz,
+                   screen, facx, facy); // show info (dir or size)
+        if (ch)
+          tmp[MAX_FILENAME] = ch; // restore cut-off char
 
-      } /* if */
-      i++;    // next item
-    } /* while */
+      }    /* if */
+      i++; // next item
+    }      /* while */
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-// draw rectangles
-  rectangle(screen, 0, TOPX - 5, sx, 320*facy, SDL_MapRGB(screen->format, 255, 255, 255));
-  rectangle(screen, 480*facx, TOPX - 5, 0, 320*facy, SDL_MapRGB(screen->format, 255, 255, 255));
+    font_print_centered(sx / 2, g_ScreenHeight - 10 * facy,
+                        "Press ENTER to choose, or ESC to cancel", screen, facx,
+                        facy);
 
-  SDL_Flip(screen);  // show the screen
-  SDL_Delay(KEY_DELAY);  // wait some time to be not too fast
+    SDL_Flip(screen);     // show the screen
+    SDL_Delay(KEY_DELAY); // wait some time to be not too fast
 
-  //////////////////////////////////
-  // Wait for keypress
-  //////////////////////////////////
-  SDL_Event event;  // event
-  Uint8 *keyboard;  // key state
+    //////////////////////////////////
+    // Wait for keypress
+    //////////////////////////////////
+    SDL_Event event; // event
+    Uint8 *keyboard; // key state
 
-  event.type = 0;
-  while(event.type != SDL_KEYDOWN) {  // wait for key pressed
-        // GPH Honor quit even if we're in the diskchoose state.
-        if (SDL_QUIT == event.type) {
-      files.Delete();
-      sizes.Delete();
-      SDL_FreeSurface(my_screen);
+    event.type = 0;
+    while (event.type != SDL_KEYDOWN) { // wait for key pressed
+      // GPH Honor quit even if we're in the diskchoose state.
+      if (SDL_QUIT == event.type) {
+        files.Delete();
+        sizes.Delete();
+        SDL_FreeSurface(my_screen);
 
-        SDL_PushEvent(&event);// push quit event
-            return false;
-        }
-    SDL_Delay(10);
-    SDL_PollEvent(&event);
-  }
+        SDL_PushEvent(&event); // push quit event
+        return false;
+      }
+      SDL_Delay(10);
+      SDL_PollEvent(&event);
+    }
 
     // control cursor
     keyboard = SDL_GetKeyState(

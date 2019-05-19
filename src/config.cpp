@@ -83,59 +83,65 @@ bool Config::CopyFile(std::string srcFile, std::string destFile) {
 
 // ValidateUserDirectory
 // Checks for presence of user directory structure for configuration files
-bool Config::ValidateUserDirectory() {
+bool Config::ValidateUserDirectory()
+{
 
-  // GPH TOOD: Revisit with more elegant solution.
-  // Looks like there's an official way to copy all files in a directory
-  // for c++17 using filesystem::, but I just want something that's
-  // going to work.
-  static const char *files[] = {
-      "charset40.bmp", "font.bmp", "splash.bmp", "Master.dsk", "linapple.conf",
-      "icon.bmp",      ""};
+#ifdef USE_ETC
+// GPH TOOD: Revisit with more elegant solution.
+// Looks like there's an official way to copy all files in a directory
+// for c++17 using filesystem::, but I just want something that's
+// going to work.
+static const char *files[] =
+{
+  "charset40.bmp",
+  "font.bmp",
+  "splash.bmp",
+  "Master.dsk",
+  "linapple.conf",
+  "icon.bmp",
+  ""
+};
+#endif
 
-  bool bResult = false;
-  struct stat buffer;
-  std::string userDir = GetHomePath();
-  userDir += USER_DIRECTORY_NAME;
-  std::string installDir = GetInstallPath();
+	bool bResult = false;
+	struct stat buffer;
+	std::string userDir = GetHomePath();
+	userDir += USER_DIRECTORY_NAME;
+	std::string installDir = GetInstallPath();
 
-  // Check that the entire subtree exists
-  bResult = (stat(userDir.c_str(), &buffer) == 0);
-  bResult &= (stat((userDir + CONF_DIRECTORY_NAME).c_str(), &buffer) == 0);
-  bResult &= (stat((userDir + SAVED_DIRECTORY_NAME).c_str(), &buffer) == 0);
-  bResult &= (stat((userDir + FTP_DIRECTORY_NAME).c_str(), &buffer) == 0);
-  bResult &= (stat(GetUserFilePath().c_str(), &buffer) == 0);
-  if (!bResult) {
-    // Directory is absent.  This means we need to create it and copy over
-    // defaults from the install location.
-    mkdir(userDir.c_str(),
-          S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-    mkdir((userDir + CONF_DIRECTORY_NAME).c_str(),
-          S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-    mkdir((userDir + SAVED_DIRECTORY_NAME).c_str(),
-          S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-    mkdir((userDir + FTP_DIRECTORY_NAME).c_str(),
-          S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-  }
+	// Check that the entire subtree exists
+	bResult = (stat (userDir.c_str(), &buffer) == 0);
+	bResult &= (stat ((userDir + CONF_DIRECTORY_NAME).c_str(), &buffer) == 0);
+	bResult &= (stat ((userDir + SAVED_DIRECTORY_NAME).c_str(), &buffer) == 0);
+	bResult &= (stat ((userDir + FTP_DIRECTORY_NAME).c_str(), &buffer) == 0);
+	bResult &= (stat (GetUserFilePath().c_str(), &buffer) == 0);
+	if (!bResult) {
+		// Directory is absent.  This means we need to create it and copy over
+		// defaults from the install location.
+		mkdir(userDir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		mkdir((userDir + CONF_DIRECTORY_NAME).c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		mkdir((userDir + SAVED_DIRECTORY_NAME).c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+		mkdir((userDir + FTP_DIRECTORY_NAME).c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+        }
 
-  cout << "Copying Files" << std::endl;
-  for (unsigned int i = 0; *files[i]; i++) {
-    string src = (GetInstallPath() + files[i]);
-    string dest = (GetUserFilePath() + files[i]);
-    if (stat(dest.c_str(), &buffer) == 0) {
-      // It's already there.
-      continue;
-    }
-    if (!(stat(src.c_str(), &buffer) == 0)) {
-      cout << "Could not stat " << src << "." << std::endl;
-      cout << "Please ensure " << GetInstallPath()
-           << " exists and contains the linapple resource files." << std::endl;
-      throw std::runtime_error("could not copy resource files");
-    }
-    CopyFile(src, dest);
-  }
-
-  return bResult;
+#ifdef USE_ETC
+        cout << "Copying Files" << std::endl;
+        for( unsigned int i = 0; *files[ i ]; i++ ) {
+            string src = (GetInstallPath() + files[ i ]);
+            string dest = (GetUserFilePath() + files[ i ]);
+            if (stat (dest.c_str(), &buffer) == 0) {
+                // It's already there.
+                continue;
+            }
+            if (!(stat (src.c_str(), &buffer) == 0)) {
+                cout << "Could not stat " << src << "." << std::endl;
+                cout << "Please ensure " << GetInstallPath() << " exists and contains the linapple resource files." << std::endl;
+                throw std::runtime_error("could not copy resource files");
+            }
+            CopyFile(src, dest);
+        }
+#endif
+	return bResult;
 }
 
 std::string Config::GetInstallPath() { return INSTALL_DIRECTORY_NAME; }
