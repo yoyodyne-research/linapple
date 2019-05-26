@@ -32,16 +32,15 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 //---------------------------------------------------------------------------
 
-void LogOutput(LPCTSTR format, ...)
-{
-    TCHAR output[256];
+void LogOutput(LPCTSTR format, ...) {
+  TCHAR output[256];
 
-    va_list args;
-    va_start(args, format);
+  va_list args;
+  va_start(args, format);
 
-    vsnprintf(output, sizeof(output) - 1, format, args);
-//    OutputDebugString(output);
-    fprintf(stderr, output);
+  vsnprintf(output, sizeof(output) - 1, format, args);
+  //    OutputDebugString(output);
+  fprintf(stderr, output);
 }
 
 //---------------------------------------------------------------------------

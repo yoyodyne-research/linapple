@@ -26,11 +26,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  * Author: Copyright (C) 2006, Michael Pohoreski
  */
 
-
 /* Needs adaptation for SDL and POSIX --bb */
-/* There are just dummy wrappers for real functions can be found in AppleWin sources
-	at http://applewin.berlios.de	*/
-
+/* There are just dummy wrappers for real functions can be found in AppleWin
+   sources
+        at http://applewin.berlios.de	*/
 
 // disable warning C4786: symbol greater than 255 character:
 //#pragma warning(disable: 4786)
@@ -38,92 +37,69 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "stdafx.h"
 
 // Full-Speed debugging
-	int  g_nDebugOnBreakInvalid  = 0;
-	int  g_iDebugOnOpcode        = 0;
-	bool g_bDebugDelayBreakCheck = false;
+int g_nDebugOnBreakInvalid = 0;
+int g_iDebugOnOpcode = 0;
+bool g_bDebugDelayBreakCheck = false;
 
-	int          g_nBreakpoints = 0;
+int g_nBreakpoints = 0;
 
+DWORD extbench = 0;
+bool g_bDebuggerViewingAppleOutput = false;
 
-	DWORD     extbench      = 0;
-	bool      g_bDebuggerViewingAppleOutput = false;
-
-
-	BOOL      g_bProfiling       = 0;
-	int       g_nDebugSteps      = 0;
-
+BOOL g_bProfiling = 0;
+int g_nDebugSteps = 0;
 
 // Still called from external file
-void DebugDisplay( BOOL bDrawBackground )
-{
-//	Update_t bUpdateFlags = UPDATE_ALL;
+void DebugDisplay(BOOL bDrawBackground) {
+  //	Update_t bUpdateFlags = UPDATE_ALL;
 
-//	if (! bDrawBackground)
-//		bUpdateFlags &= ~UPDATE_BACKGROUND;
+  //	if (! bDrawBackground)
+  //		bUpdateFlags &= ~UPDATE_BACKGROUND;
 
-//	UpdateDisplay( bUpdateFlags );
+  //	UpdateDisplay( bUpdateFlags );
 }
 
 //===========================================================================
-void	DebuggerMouseClick( int x, int y )
-{
-	if (g_nAppMode != MODE_DEBUG)
-		return;
+void DebuggerMouseClick(int x, int y) {
+  if (g_nAppMode != MODE_DEBUG)
+    return;
 }
 
-void DebugEnd ()
-{
-
-}
-
-
+void DebugEnd() {}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
-void DebuggerProcessKey( int keycode )
-//void DebugProcessCommand (int keycode)
+void DebuggerProcessKey(int keycode)
+// void DebugProcessCommand (int keycode)
 {
-	if (g_nAppMode != MODE_DEBUG)
-		return;
-
+  if (g_nAppMode != MODE_DEBUG)
+    return;
 }
 
 //===========================================================================
-void DebuggerUpdate()
-{
-//	DebuggerCursorUpdate();
+void DebuggerUpdate() {
+  //	DebuggerCursorUpdate();
 }
 
+void DebugContinueStepping() {}
 
-
-void DebugContinueStepping ()
-{
-
+//===========================================================================
+void DebugDestroy() {
+  //	DebugEnd();
 }
 
 //===========================================================================
-void DebugDestroy ()
-{
-//	DebugEnd();
+void DebugInitialize() {
+  //	AssemblerOff(); // update prompt
 }
 
+void DebuggerInputConsoleChar(TCHAR ch) {
+  if ((g_nAppMode == MODE_STEPPING) && (ch == DEBUG_EXIT_KEY)) {
+    g_nDebugSteps = 0; // Exit Debugger
+  }
 
-//===========================================================================
-void DebugInitialize ()
-{
-//	AssemblerOff(); // update prompt
+  if (g_nAppMode != MODE_DEBUG)
+    return;
 }
-
-void DebuggerInputConsoleChar( TCHAR ch )
-{
-	if ((g_nAppMode == MODE_STEPPING) && (ch == DEBUG_EXIT_KEY))
-	{
-		g_nDebugSteps = 0; // Exit Debugger
-	}
-
-	if (g_nAppMode != MODE_DEBUG)
-		return;
-}
-
