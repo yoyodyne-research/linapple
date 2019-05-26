@@ -23,19 +23,20 @@ extern "C" {
 
 #ifndef BASETYPES
 #define BASETYPES
-typedef unsigned /*long*/int ULONG;
+typedef unsigned /*long*/ int ULONG;
 typedef ULONG *PULONG;
 typedef unsigned short USHORT;
 typedef USHORT *PUSHORT;
 typedef unsigned char UCHAR;
 typedef UCHAR *PUCHAR;
 typedef char *PSZ;
-#endif  /* !BASETYPES */
-
+#endif /* !BASETYPES */
 
 typedef void *HANDLE;
-typedef signed short INT16;    // why there was char instead of short? --bb ??????????????????
-typedef unsigned short UINT16;    // why there was char instead of short? --bb ??????????????????? 0_0
+typedef signed short
+    INT16; // why there was char instead of short? --bb ??????????????????
+typedef unsigned short
+    UINT16; // why there was char instead of short? --bb ??????????????????? 0_0
 #define __int64 long long
 
 typedef unsigned int UINT32;
@@ -43,23 +44,22 @@ typedef unsigned char UINT8;
 typedef int INT32;
 //#define __stdcall _cdecl
 
-
-#define MAX_PATH          260
+#define MAX_PATH 260
 
 #ifndef NULL
 #ifdef __cplusplus
-#define NULL    0
+#define NULL 0
 #else
-#define NULL    ((void *)0)
+#define NULL ((void *)0)
 #endif
 #endif
 
 #ifndef FALSE
-#define FALSE               0
+#define FALSE 0
 #endif
 
 #ifndef TRUE
-#define TRUE                1
+#define TRUE 1
 #endif
 
 #ifndef IN
@@ -88,62 +88,59 @@ typedef int INT32;
 
 #undef FAR
 #undef NEAR
-#define FAR                 far
-#define NEAR                near
+#define FAR far
+#define NEAR near
 #ifndef CONST
-#define CONST               const
+#define CONST const
 #endif
 
-typedef unsigned /*long*/int       DWORD;
-typedef int                 BOOL;
-typedef unsigned char       BYTE;
-typedef unsigned short      WORD;
-typedef float               FLOAT;
-typedef FLOAT               *PFLOAT;
-typedef BOOL near           *PBOOL;
-typedef BOOL far            *LPBOOL;
-typedef BYTE near           *PBYTE;
-typedef BYTE far            *LPBYTE;
-typedef int near            *PINT;
-typedef int far             *LPINT;
-typedef WORD near           *PWORD;
-typedef WORD far            *LPWORD;
-typedef long far            *LPLONG;
-typedef DWORD near          *PDWORD;
-typedef DWORD far           *LPDWORD;
-typedef void far            *LPVOID;
-typedef CONST void far      *LPCVOID;
+typedef unsigned /*long*/ int DWORD;
+typedef int BOOL;
+typedef unsigned char BYTE;
+typedef unsigned short WORD;
+typedef float FLOAT;
+typedef FLOAT *PFLOAT;
+typedef BOOL near *PBOOL;
+typedef BOOL far *LPBOOL;
+typedef BYTE near *PBYTE;
+typedef BYTE far *LPBYTE;
+typedef int near *PINT;
+typedef int far *LPINT;
+typedef WORD near *PWORD;
+typedef WORD far *LPWORD;
+typedef long far *LPLONG;
+typedef DWORD near *PDWORD;
+typedef DWORD far *LPDWORD;
+typedef void far *LPVOID;
+typedef CONST void far *LPCVOID;
 
-typedef int                 INT;
-typedef unsigned int        UINT;
-typedef unsigned int        *PUINT;
+typedef int INT;
+typedef unsigned int UINT;
+typedef unsigned int *PUINT;
 
 //#define LPSTR        (char*)
 
+#define MAKEWORD(a, b) ((WORD)(((BYTE)(a)) | ((WORD)((BYTE)(b))) << 8))
+#define MAKELONG(a, b) ((LONG)(((WORD)(a)) | ((DWORD)((WORD)(b))) << 16))
+#define LOWORD(l) ((WORD)(l))
+#define HIWORD(l) ((WORD)(((DWORD)(l) >> 16) & 0xFFFF))
+#define LOBYTE(w) ((BYTE)(w))
+#define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
 
-#define MAKEWORD(a, b)      ((WORD)(((BYTE)(a)) | ((WORD)((BYTE)(b))) << 8))
-#define MAKELONG(a, b)      ((LONG)(((WORD)(a)) | ((DWORD)((WORD)(b))) << 16))
-#define LOWORD(l)           ((WORD)(l))
-#define HIWORD(l)           ((WORD)(((DWORD)(l) >> 16) & 0xFFFF))
-#define LOBYTE(w)           ((BYTE)(w))
-#define HIBYTE(w)           ((BYTE)(((WORD)(w) >> 8) & 0xFF))
-
-typedef DWORD   COLORREF;
-typedef DWORD   *LPCOLORREF;
-
+typedef DWORD COLORREF;
+typedef DWORD *LPCOLORREF;
 
 ////////////////////////// WINNT ///////////////////////////////
 #ifndef VOID
 #define VOID void
 typedef char CHAR;
 typedef short SHORT;
-typedef /*long*/int LONG;
+typedef /*long*/ int LONG;
 typedef SHORT *PSHORT;
 typedef LONG *PLONG;
 #endif
 
-
-typedef char WCHAR;    // wc,   16-bit UNICODE character
+typedef char WCHAR; // wc,   16-bit UNICODE character
 typedef WCHAR *PWCHAR;
 typedef WCHAR *LPWCH, *PWCH;
 typedef CONST WCHAR *LPCWCH, *PCWCH;
@@ -151,8 +148,6 @@ typedef WCHAR *NWPSTR;
 typedef WCHAR *LPWSTR, *PWSTR;
 
 typedef CONST WCHAR *LPCWSTR, *PCWSTR;
-
-
 
 //
 // ANSI (Multi-byte Character) types
@@ -170,31 +165,29 @@ typedef LPWSTR PTSTR, LPTSTR;
 typedef LPCWSTR LPCTSTR;
 typedef LPWSTR LP;
 
-
 #ifndef _TCHAR_DEFINED
 typedef char TCHAR, *PTCHAR;
-typedef unsigned char TBYTE , *PTBYTE ;
+typedef unsigned char TBYTE, *PTBYTE;
 #define _TCHAR_DEFINED
 #endif /* !_TCHAR_DEFINED */
 
 ////////////////////////////////////////////////////
 typedef struct _OVERLAPPED {
-  DWORD   Internal;
-  DWORD   InternalHigh;
-  DWORD   Offset;
-  DWORD   OffsetHigh;
-  HANDLE  hEvent;
+  DWORD Internal;
+  DWORD InternalHigh;
+  DWORD Offset;
+  DWORD OffsetHigh;
+  HANDLE hEvent;
 } OVERLAPPED, *LPOVERLAPPED;
 
-typedef struct tagPOINT
-{
-  LONG  x;
-  LONG  y;
+typedef struct tagPOINT {
+  LONG x;
+  LONG y;
 } POINT, *PPOINT, NEAR *NPPOINT, FAR *LPPOINT;
 
 // TCHAR support
-#define __TEXT(quote) quote         // r_winnt
-#define TEXT(quote) __TEXT(quote)   // r_winnt
+#define __TEXT(quote) quote       // r_winnt
+#define TEXT(quote) __TEXT(quote) // r_winnt
 
 #define _tcschr strchr
 #define _tcscspn strcspn
@@ -228,26 +221,28 @@ typedef struct tagPOINT
 /* Note that _mbscat, _mbscpy and _mbsdup are functionally equivalent to
     strcat, strcpy and strdup, respectively. */
 
-#define _tcscat     strcat
-#define _tcscpy     strcpy
-#define _tcsdup     strdup
+#define _tcscat strcat
+#define _tcscpy strcpy
+#define _tcsdup strdup
 
-#define _tcslen     strlen
-#define _tcsxfrm    strxfrm
+#define _tcslen strlen
+#define _tcsxfrm strxfrm
 
-#define MoveMemory(Destination,Source,Length) memmove((Destination),(Source),(Length))
-#define FillMemory(Destination,Length,Fill) memset((Destination),(Fill),(Length))
-#define EqualMemory(Destination,Source,Length) (!memcmp((Destination),(Source),(Length)))
-#define CopyMemory(Destination,Source,Length) memcpy((Destination),(Source),(Length))
-#define ZeroMemory(Destination,Length) memset((Destination),0,(Length))
+#define MoveMemory(Destination, Source, Length)                                \
+  memmove((Destination), (Source), (Length))
+#define FillMemory(Destination, Length, Fill)                                  \
+  memset((Destination), (Fill), (Length))
+#define EqualMemory(Destination, Source, Length)                               \
+  (!memcmp((Destination), (Source), (Length)))
+#define CopyMemory(Destination, Source, Length)                                \
+  memcpy((Destination), (Source), (Length))
+#define ZeroMemory(Destination, Length) memset((Destination), 0, (Length))
 
 #define GetTickCount SDL_GetTicks
-#define _ASSERT  assert
-
+#define _ASSERT assert
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* _WINDEF_ */
-

@@ -1,35 +1,35 @@
 /*
-	asset.cpp - LinApple asset management
-	<one line to give the program's name and a brief idea of what it does.>
-	Copyright (C) 2018  T. Joseph Carter
+        asset.cpp - LinApple asset management
+        <one line to give the program's name and a brief idea of what it does.>
+        Copyright (C) 2018  T. Joseph Carter
 
-	This program is free software; you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation; either version 2 of the License, or
-	(at your option) any later version.
+        This program is free software; you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as published by
+        the Free Software Foundation; either version 2 of the License, or
+        (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License along
-	with this program; if not, write to the Free Software Foundation, Inc.,
-	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+        You should have received a copy of the GNU General Public License along
+        with this program; if not, write to the Free Software Foundation, Inc.,
+        51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include <sys/param.h>
 #include <SDL.h>
+#include <sys/param.h>
 
 #include "asset.h"
-#include "stdafx.h"  // for Disk.h DiskInsert()
-#include "shim.h"  // SDL_GetBasePath()
+#include "shim.h"   // SDL_GetBasePath()
+#include "stdafx.h" // for Disk.h DiskInsert()
 
-#define ASSET_ICON_BMP       "icon.bmp"
-#define ASSET_SPLASH_BMP     "splash.bmp"
-#define ASSET_CHARSET40_BMP  "charset40.bmp"
-#define ASSET_FONT_BMP       "font.bmp"
-#define ASSET_MASTER_DSK     "Master.dsk"
+#define ASSET_ICON_BMP "icon.bmp"
+#define ASSET_SPLASH_BMP "splash.bmp"
+#define ASSET_CHARSET40_BMP "charset40.bmp"
+#define ASSET_FONT_BMP "font.bmp"
+#define ASSET_MASTER_DSK "Master.dsk"
 
 assets_t *assets = NULL;
 
@@ -40,8 +40,7 @@ static char system_assets[] = "./"
 #endif
 static char *system_exedir = NULL;
 
-SDL_Surface *Asset_LoadBMP(const char *filename)
-{
+SDL_Surface *Asset_LoadBMP(const char *filename) {
   SDL_Surface *surf;
   char *path = (char *)SDL_malloc(sizeof(char[PATH_MAX]));
   if (NULL == path) {
@@ -60,18 +59,19 @@ SDL_Surface *Asset_LoadBMP(const char *filename)
     fprintf(stderr, "Asset_LoadBMP: Loaded %s from %s\n", filename, path);
   } else {
     fprintf(stderr, "Asset_LoadBMP: Couldn't load %s in either %s or %s!\n",
-        filename, system_assets, system_exedir);
+            filename, system_assets, system_exedir);
   }
 
   SDL_free(path);
   return surf;
 }
 
-bool Asset_Init(void)
-{
+bool Asset_Init(void) {
   system_exedir = SDL_GetBasePath();
   if (NULL == system_exedir) {
-    fprintf(stderr, "Asset_Init: Warning: SDL_GetBasePath() returned NULL, using \"./\"\n");
+    fprintf(
+        stderr,
+        "Asset_Init: Warning: SDL_GetBasePath() returned NULL, using \"./\"\n");
     system_exedir = SDL_strdup("./");
   }
 
@@ -104,8 +104,7 @@ bool Asset_Init(void)
   return true;
 }
 
-void Asset_Quit(void)
-{
+void Asset_Quit(void) {
   if (NULL != assets) {
     if (NULL != assets->icon) {
       SDL_FreeSurface(assets->icon);
@@ -137,8 +136,7 @@ void Asset_Quit(void)
 }
 
 // FIXME: How this is done is currently kinda screwed up. Refactor
-int Asset_InsertMasterDisk(void)
-{
+int Asset_InsertMasterDisk(void) {
   int rc;
   char *path = (char *)SDL_malloc(sizeof(char[PATH_MAX]));
   snprintf(path, PATH_MAX, "%s%s", system_assets, ASSET_MASTER_DSK);

@@ -34,13 +34,12 @@
 #include "Common.h"
 #include "Structs.h"
 
-#include "AppleWin.h"
 #include "AY8910.h"
+#include "AppleWin.h"
 
 #include "CPU.h"
 
 #include "Debug.h" //- may be soon...
-
 
 #include "Disk.h"
 #include "DiskChoose.h"
@@ -60,7 +59,7 @@
 #include "Riff.h"
 #include "SaveState.h"
 #include "SerialComms.h"
-#include "SoundCore.h"  //- will do later
+#include "SoundCore.h" //- will do later
 #include "Speaker.h"
 //#include "Tfe/Tfe.h"
 
