@@ -37,7 +37,7 @@ INSTDIR     := $(PREFIX)/lib/$(PACKAGE)
 
 SDL_CONFIG ?= sdl-config
 SDL_CFLAGS = $(shell $(SDL_CONFIG) --cflags)
-SDL_LIBS = $(shell $(SDL_CONFIG) --libs)
+SDL_LIBS = $(shell $(SDL_CONFIG) --libs) -lSDL_image
 
 CURL_CONFIG ?= curl-config
 CURL_CFLAGS = $(shell $(CURL_CONFIG) --cflags)

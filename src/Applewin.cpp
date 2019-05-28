@@ -28,6 +28,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* Adaptation for SDL and POSIX (l) by beom beotiger, Nov-Dec 2007, krez
  * beotiger March 2012 AD */
+/*
+
+Linappple-pie was adapted in OCT 2015 for use with Retropie.
+By Mark Ormond.
+*/
 
 #include "stdafx.h"
 //#pragma  hdrstop
@@ -35,6 +40,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 // for time logging
 #include <curl/curl.h>
+#include <fstream>
+#include <getopt.h>
+#include <stdlib.h>
+#include <strings.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <time.h>
@@ -66,6 +75,12 @@ TCHAR *g_pAppTitle = TITLE_APPLE_2E_ENHANCED_;
 
 eApple2Type g_Apple2Type = A2TYPE_APPLE2EEHANCED;
 
+int opt;
+bool argdisks = false;
+bool argdisks2 = false;
+bool autoboot = false;
+bool fullscreenboot = false;
+bool disablecursor = false;
 BOOL behind = 0;            // Redundant
 DWORD cumulativecycles = 0; // Wraps after ~1hr 9mins
 DWORD cyclenum = 0;         // Used by SpkrToggle() for non-wave sound
@@ -74,6 +89,10 @@ static DWORD emulmsec_frac = 0;
 bool g_bFullSpeed = false;
 bool hddenabled = false;
 static bool g_uMouseInSlot4 = false; // not any mouse in slot4??--bb
+// char *MASTER_DISK="/opt/retropie/emulators/linapple/Master.dsk";
+char *Disk1 = "blank.dsk";
+char *Disk2 = "blank.dsk";
+
 // Win32
 // HINSTANCE g_hInstance          = (HINSTANCE)0;
 
@@ -355,6 +374,11 @@ void EnterMessageLoop() {
         } else {
           ContinueExecution();
           if (g_nAppMode != MODE_DEBUG) {
+            if (joyexitenable) {
+              CheckJoyExit();
+              if (joyquitevent)
+                return;
+            }
             if (g_bFullSpeed)
               ContinueExecution();
           }
@@ -482,9 +506,37 @@ void LoadConfiguration() {
   default:
     break;
   }
-
+  // Load Joystick values
+  joytype[0] = 2;
+  joytype[1] = 0;
   LOAD(TEXT("Joystick 0"), &joytype[0]);
   LOAD(TEXT("Joystick 1"), &joytype[1]);
+  LOAD(TEXT("Joy0Index"), &joy1index);
+  LOAD(TEXT("Joy1Index"), &joy2index);
+
+  LOAD(TEXT("Joy0Button1"), &joy1button1);
+  LOAD(TEXT("Joy0Button2"), &joy1button2);
+  LOAD(TEXT("Joy1Button1"), &joy2button1);
+
+  LOAD(TEXT("Joy0Axis0"), &joy1axis0);
+  LOAD(TEXT("Joy0Axis1"), &joy1axis1);
+  LOAD(TEXT("Joy1Axis0"), &joy2axis0);
+  LOAD(TEXT("Joy1Axis1"), &joy2axis1);
+  LOAD(TEXT("JoyExitEnable"), &joyexitenable);
+  LOAD(TEXT("JoyExitButton0"), &joyexitbutton0);
+  LOAD(TEXT("JoyExitButton1"), &joyexitbutton1);
+
+  if (joytype[0] == 1)
+    printf("Joystick 1 Index # = %i, Name = %s \nButton 1 = %i, Button 2 = %i "
+           "\nAxis 0 = %i,Axis 1 = %i\n",
+           joy1index, SDL_JoystickName(joy1index), joy1button1, joy1button2,
+           joy1axis0, joy1axis1);
+  if (joytype[1] == 1)
+    printf("Joystick 2 Index # = %i, Name = %s \nButton 1 = %i \nAxis 0 = "
+           "%i,Axis 1 = %i\n",
+           joy2index, SDL_JoystickName(joy2index), joy2button1, joy2axis0,
+           joy2axis1);
+
   LOAD(TEXT("Sound Emulation"), &soundtype);
 
   DWORD dwSerialPort;
@@ -501,6 +553,12 @@ void LoadConfiguration() {
 
   LOAD(TEXT("Fullscreen"), &dwTmp); // load fullscreen flag
   fullscreen = (BOOL)dwTmp;
+  if (fullscreenboot)
+    fullscreen = true;
+
+  LOAD(TEXT("DisableCursor"), &dwTmp); // load Disable Cursor Flag
+  disablecursor = (BOOL)dwTmp;
+
   dwTmp = 1;
   LOAD(TEXT(REGVALUE_SHOW_LEDS), &dwTmp); // load Show Leds flag
   g_ShowLeds = (BOOL)dwTmp;
@@ -525,7 +583,7 @@ void LoadConfiguration() {
     MB_SetSoundcardType((eSOUNDCARDTYPE)dwTmp);
 
   if (LOAD(TEXT(REGVALUE_SAVE_STATE_ON_EXIT), &dwTmp))
-    g_bSaveStateOnExit = (dwTmp != 0);
+    g_bSaveStateOnExit = dwTmp ? true : false;
 
   if (LOAD(TEXT(REGVALUE_HDD_ENABLED), &dwTmp))
     hddenabled = (bool)dwTmp; // after MemInitialize
@@ -544,23 +602,54 @@ void LoadConfiguration() {
 
   dwTmp = 0;
   LOAD(TEXT("Boot at Startup"), &dwTmp); //
-  if (dwTmp) {
+  if ((dwTmp) || (autoboot))
+
+  {
     // autostart
     setAutoBoot();
   }
 
   dwTmp = 0;
   LOAD(TEXT("Slot 6 Autoload"), &dwTmp); // load autoinsert for Slot 6 flag
-  if (dwTmp) {
+  if (dwTmp && !autoboot) {
     // Load floppy disk images and insert it automatically in slot 6 drive 1 and
     // 2
-    static char szDiskImage1[] = REGVALUE_DISK_IMAGE1;
-    SetDiskImageDirectory(szDiskImage1, 0);
-    SetDiskImageDirectory(szDiskImage1, 1);
+    if (RegLoadString(TEXT("Configuration"), TEXT(REGVALUE_DISK_IMAGE1), 1,
+                      &szHDFilename, MAX_PATH)) {
+      DoDiskInsert(0, szHDFilename);
+      free(szHDFilename);
+      szHDFilename = NULL;
+    }
+    if (RegLoadString(TEXT("Configuration"), TEXT(REGVALUE_DISK_IMAGE2), 1,
+                      &szHDFilename, MAX_PATH)) {
+      DoDiskInsert(1, szHDFilename);
+      free(szHDFilename);
+      szHDFilename = NULL;
+    }
   } else {
-    Asset_InsertMasterDisk();
-  }
 
+    if (argdisks) {
+      DoDiskInsert(0, Disk1);
+    } else {
+
+      const char *home = getenv("HOME");
+      std::string MASTER_DISKstr(home);
+      MASTER_DISKstr += "/.linapple/Master.dsk";
+      const char *MasterDiskLocation = MASTER_DISKstr.c_str();
+      ifstream ifile2(MasterDiskLocation);
+
+      if (ifile2) {
+        char *MasterDisk = new char[MASTER_DISKstr.length() + 1];
+        strcpy(MasterDisk, MASTER_DISKstr.c_str());
+        DoDiskInsert(0, MasterDisk);
+      } else {
+        char *MasterDisk = "Master.dsk";
+        DoDiskInsert(0, MasterDisk);
+      }
+    }
+    if (argdisks2)
+      DoDiskInsert(1, Disk2);
+  }
   // Load hard disk images and insert it automatically in slot 7
   if (RegLoadString(TEXT("Configuration"), TEXT(REGVALUE_HDD_IMAGE1), 1,
                     &szHDFilename, MAX_PATH)) {
@@ -805,66 +894,67 @@ LPSTR GetNextArg(LPSTR lpCmdLine) {
 //---------------------------------------------------------------------------
 
 int main(int argc, char *lpCmdLine[]) {
-  if (!Asset_Init()) {
-    return 1;
+  //		reading FullScreen and Boot from conf file?
+  	bool bSetFullScreen = false;
+  	bool bBoot = false;
+
+  //
+  // Find Home Directory and assign linapple.conf to ~/.linapple/linapple.conf
+  // if not found set default name in current directory
+  const char *home = getenv("HOME");
+  std::string linappleconfstr(home);
+  linappleconfstr += "/.linapple/linapple.conf";
+  const char *linappleconf = linappleconfstr.c_str();
+  ifstream ifile(linappleconf);
+  if (ifile) {
+    registry =
+        fopen(linappleconf, "a+t"); // open conf file (linapple.conf by default)
+  } else {
+    registry = fopen("linapple.conf",
+                     "a+t"); // open conf file (linapple.conf by default)
   }
 
-  // GPH: The very first thing we do is attempt to grab the needed configuration
-  // files and put them in the user's folder.
-  Config config;
-  config.ValidateUserDirectory();
-  config.ChangeToUserDirectory();
+  //	spMono = fopen("speakersmono.pcm","wb");
+  //	spStereo = fopen("speakersstereo.pcm","wb");
 
-  //    reading FullScreen and Boot from conf file?
-  bool bSetFullScreen = false;
-  bool bBoot = false;
+  	LPSTR szImageName_drive1 = NULL; // file names for images of drive1 and
+  // drive2
+  	LPSTR szImageName_drive2 = NULL;
 
-  registry = fopen(REGISTRY, "rt"); // open conf file (linapple.conf by default)
+  bool bBenchMark = false;
+  //	bool bBenchMark = (argc > 1 &&
+  //		!strcmp(lpCmdLine[1],"-b"));	// if we should start benchmark
+  //(-b
+  // in command line string)
 
-  LPSTR szImageName_drive1 = NULL; // file names for images of drive1 and drive2
-  LPSTR szImageName_drive2 = NULL;
-
-  bool bBenchMark =
-      (argc > 1 &&
-       !strcmp(
-           lpCmdLine[1],
-           "-b")); // if we should start benchmark (-b in command line string)
-
-  // I will remake this using getopt and getoptlong!
-
-  for (int x = 0; x < argc; x++) {
-    LPSTR lpNextArg = lpCmdLine[x]; // GetNextArg(*lpCmdLine);
-
-    if (strcmp(lpNextArg, "-d1") == 0) {
-      //*lpCmdLine = lpNextArg;
-      //			lpNextArg = GetNextArg(*lpCmdLine);
-      szImageName_drive1 = lpCmdLine[x + 1];
-      if (*szImageName_drive1 == '\"')
-        szImageName_drive1++;
-    } else if (strcmp(lpNextArg, "-d2") == 0) {
-      //*lpCmdLine = lpNextArg;
-      //			lpNextArg = GetNextArg(*lpCmdLine);
-      szImageName_drive2 = lpCmdLine[x + 1];
-      if (*szImageName_drive2 == '\"')
-        szImageName_drive2++;
-    } else if (strcmp(lpNextArg, "-f") == 0) {
-      bSetFullScreen = true;
-    } else if ((strcmp(lpNextArg, "-l") == 0) && (g_fh == NULL)) {
-      g_fh = fopen("AppleWin.log",
-                   "a+t"); // Open log file (append & text g_nAppMode)
-                           // Start of Unix(tm) specific code
-      struct timeval tv;
-      struct tm *ptm;
-      char time_str[40];
-      gettimeofday(&tv, NULL);
-      ptm = localtime(&tv.tv_sec);
-      strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", ptm);
-      // end of Unix(tm) specific code
-      fprintf(g_fh, "*** Logging started: %s\n", time_str);
-    } else if (strcmp(lpNextArg, "-m") == 0) {
-      g_bDisableDirectSound =
-          true; // without direct sound? U-u-u-u-uuuuuuuhhhhhhhhh --bb
+  while ((opt = getopt(argc, lpCmdLine, "1:2:rbhf")) != -1) {
+    switch (opt) {
+    case '1':
+      Disk1 = optarg;
+      argdisks = true;
+      break;
+    case '2':
+      Disk2 = optarg;
+      argdisks2 = true;
+      break;
+    case 'r':
+      autoboot = true;
+      break;
+    case 'b':
+      bBenchMark = true;
+      printf("benchmark");
+      break;
+    case 'h':
+      printf("Linapple command options..\n\n -h Show this help message\n -1 "
+             "Mount disk image in first drive\n -2 Mount disk image in second "
+             "drive\n -r Auto start emulation\n -b Benchmark and quit\n\n");
+      return 0;
+      break;
+    case 'f':
+      fullscreenboot = true;
+      break;
     }
+#if 0
 #ifdef RAMWORKS
     else if (strcmp(lpNextArg, "-r") == 0) // RamWorks size [1..127]
     {
@@ -878,6 +968,7 @@ int main(int argc, char *lpCmdLine[]) {
     } else if (strcmp(lpNextArg, "-autoboot") == 0) {
       bBoot = true;
     }
+#endif
 #endif
 
     //*lpCmdLine = lpNextArg;
@@ -1043,6 +1134,8 @@ int main(int argc, char *lpCmdLine[]) {
 
     JoyReset();
     SetUsingCursor(0);
+    if (disablecursor)
+      SDL_ShowCursor(SDL_DISABLE);
 
     // trying fullscreen
     if (!fullscreen)

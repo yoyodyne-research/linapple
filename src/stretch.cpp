@@ -32,9 +32,9 @@
 
 // static unsigned char copy_row[4096];
 
+#include "../res/font.xpm"
 #include "stdafx.h"
-
-#include "asset.h"
+#include <SDL_image.h>
 
 #define DEFINE_COPY_ROW(name, type)                                            \
   void name(type *src, int src_w, type *dst, int dst_w) {                      \
@@ -110,6 +110,7 @@ int SDL_SoftStretchMy(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
   int src_locked;
   int dst_locked;
   int pos, inc;
+  int dst_width;
   int dst_maxrow;
   int src_row, dst_row;
   Uint8 *srcp = NULL;
@@ -163,6 +164,7 @@ int SDL_SoftStretchMy(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
   inc = (srcrect->h << 16) / dstrect->h;
   src_row = srcrect->y;
   dst_row = dstrect->y;
+  dst_width = dstrect->w * bpp;
 
   /* Perform the stretch blit */
   for (dst_maxrow = dst_row + dstrect->h; dst_row < dst_maxrow; ++dst_row) {
@@ -231,6 +233,7 @@ int SDL_SoftStretchMono8(
   int src_locked;
   int dst_locked;
   int pos, inc;
+  int dst_width;
   int dst_maxrow;
   int src_row, dst_row;
   Uint8 *srcp = NULL;
@@ -279,6 +282,7 @@ int SDL_SoftStretchMono8(
   inc = (srcrect->h << 16) / dstrect->h;
   src_row = srcrect->y;
   dst_row = dstrect->y;
+  dst_width = dstrect->w * bpp;
 
   /* Perform the stretch blit */
   for (dst_maxrow = dst_row + dstrect->h; dst_row < dst_maxrow; ++dst_row) {
@@ -331,6 +335,7 @@ int SDL_SoftStretchOr(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
   int src_locked;
   int dst_locked;
   int pos, inc;
+  int dst_width;
   int dst_maxrow;
   int src_row, dst_row;
   Uint8 *srcp = NULL;
@@ -384,6 +389,7 @@ int SDL_SoftStretchOr(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
   inc = (srcrect->h << 16) / dstrect->h;
   src_row = srcrect->y;
   dst_row = dstrect->y;
+  dst_width = dstrect->w * bpp;
 
   /* Perform the stretch blit */
   for (dst_maxrow = dst_row + dstrect->h; dst_row < dst_maxrow; ++dst_row) {
@@ -433,11 +439,12 @@ SDL_Surface *font_sfc = NULL; // used for font
 //#define CHARS_IN_ROW  45
 
 bool fonts_initialization(void) {
-  if (!assets->font) {
-    return false;
-  }
-  font_sfc = SDL_DisplayFormat(assets->font);
 
+  SDL_Surface *temp_surface;
+  temp_surface = IMG_ReadXPMFromArray(font_xpm);
+  font_sfc = SDL_DisplayFormat(temp_surface);
+
+  SDL_FreeSurface(temp_surface);
   /* Transparant color is BLACK: */
   SDL_SetColorKey(font_sfc, SDL_SRCCOLORKEY,
                   SDL_MapRGB(font_sfc->format, 0, 0, 0));

@@ -34,8 +34,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <unistd.h>
 
 #include "stdafx.h"
-
-#include "asset.h"
+#include <unistd.h>
 //#pragma  hdrstop
 #include "MouseInterface.h"
 //#include "..\resource\resource.h"
@@ -46,6 +45,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <iostream>
 
 #define ENABLE_MENU 0
+
+SDL_Surface *apple_icon; // icon
 
 SDL_Surface *screen; // our main screen
 // rects for screen stretch if needed
@@ -393,6 +394,7 @@ void DrawStatusArea(
 
   Uint32 mybluez =
       SDL_MapRGB(screen->format, 10, 10, 255); // bluez color, know that?
+  //Uint32 myyell = SDL_MapRGB(screen->format, 255, 255, 0); // yellow color?
 
   SDL_SetColors(g_hStatusSurface, screen->format->palette->colors, 0, 256);
   //  Uint32 myblack  = SDL_MapRGB(screen->format, 0, 0, 0);  // black color
@@ -500,7 +502,7 @@ void FrameShowHelpScreen(int sx,
 
   const char *HelpStrings[] = {
       "Welcome to LinApple - Apple][ emulator for Linux!",
-      "Conf file is linapple.conf in current directory by default",
+      "Conf file is linapple.conf in ~/.linapple directory by default",
       "Hugest archive of Apple][ stuff you can find at ftp.apple.asimov.net",
       " F1 - This help",
       " Ctrl+F2 - Cold reset",
@@ -584,8 +586,8 @@ void FrameShowHelpScreen(int sx,
   rectangle(screen, 1, 1, /*SCREEN_WIDTH*/ g_ScreenWidth - 2, (Help_TopX - 8),
             SDL_MapRGB(screen->format, 255, 255, 0));
 
-  if (assets->icon != NULL) { // display Apple logo
-    tempSurface = SDL_DisplayFormat(assets->icon);
+  if (apple_icon != NULL) { // display Apple logo
+    tempSurface = SDL_DisplayFormat(apple_icon);
     SDL_Rect logo, scrr;
     logo.x = logo.y = 0;
     logo.w = tempSurface->w;
@@ -1265,18 +1267,19 @@ int InitSDL() {
 
   /*  assets->icon = SDL_CreateRGBSurfaceFrom((void*)Apple_icon, 32, 32, 8, 32,
      0, 0, 0, 0);
-      Uint32 colorkey = SDL_MapRGB(assets->icon->format, 0, 0, 0);
-      SDL_SetColorKey(assets->icon, SDL_SRCCOLORKEY, colorkey);
-      SDL_WM_SetIcon(assets->icon, NULL);
-      printf("Icon was set! Width=%d, height=%d\n", assets->icon->w,
-     assets->icon->h);*/
+          Uint32 colorkey = SDL_MapRGB(apple_icon->format, 0, 0, 0);
+          SDL_SetColorKey(apple_icon, SDL_SRCCOLORKEY, colorkey);
+          SDL_WM_SetIcon(apple_icon, NULL);
+          printf("Icon was set! Width=%d, height=%d\n", apple_icon->w,
+     apple_icon->h);*/
 
-  if (assets->icon != NULL) {
-    Uint32 colorkey = SDL_MapRGB(assets->icon->format, 0, 0, 0);
-    SDL_SetColorKey(assets->icon, SDL_SRCCOLORKEY, colorkey);
-    SDL_WM_SetIcon(assets->icon, NULL);
-    //    printf("Icon was set! Width=%d, height=%d\n", assets->icon->w,
-    //    assets->icon->h);
+  apple_icon = SDL_LoadBMP("icon.bmp");
+  if (apple_icon != NULL) {
+    Uint32 colorkey = SDL_MapRGB(apple_icon->format, 0, 0, 0);
+    SDL_SetColorKey(apple_icon, SDL_SRCCOLORKEY, colorkey);
+    SDL_WM_SetIcon(apple_icon, NULL);
+    //		printf("Icon was set! Width=%d, height=%d\n", apple_icon->w,
+    // apple_icon->h);
   }
   //////////////////////////////////////////////////////////////////////
   return 0;
@@ -1328,7 +1331,7 @@ void FrameRefreshStatus(int drawflags) {
 //   wndclass.hCursor       = LoadCursor(0,IDC_ARROW);
 //   wndclass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 // #if ENABLE_MENU
-//   wndclass.lpszMenuName   = (LPCSTR)IDR_MENU1;
+//   wndclass.lpszMenuName	 = (LPCSTR)IDR_MENU1;
 // #endif
 //   wndclass.lpszClassName = TEXT("APPLE2FRAME");
 //   wndclass.hIconSm       =
