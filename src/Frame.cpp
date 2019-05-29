@@ -44,6 +44,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include <iostream>
 
+#include <SDL_image.h>
+#include "../res/icon.xpm"
+
 #define ENABLE_MENU 0
 
 SDL_Surface *apple_icon; // icon
@@ -586,17 +589,15 @@ void FrameShowHelpScreen(int sx,
   rectangle(screen, 1, 1, /*SCREEN_WIDTH*/ g_ScreenWidth - 2, (Help_TopX - 8),
             SDL_MapRGB(screen->format, 255, 255, 0));
 
-  if (apple_icon != NULL) { // display Apple logo
-    tempSurface = SDL_DisplayFormat(apple_icon);
-    SDL_Rect logo, scrr;
-    logo.x = logo.y = 0;
-    logo.w = tempSurface->w;
-    logo.h = tempSurface->h;
-    scrr.x = int(460 * facx);
-    scrr.y = int(270 * facy);
-    scrr.w = scrr.h = int(100 * facy);
-    SDL_SoftStretchOr(tempSurface, &logo, screen, &scrr);
-  }
+  tempSurface = SDL_DisplayFormat(IMG_ReadXPMFromArray(icon_xpm));
+  SDL_Rect logo, scrr;
+  logo.x = logo.y = 0;
+  logo.w = tempSurface->w;
+  logo.h = tempSurface->h;
+  scrr.x = int(460 * facx);
+  scrr.y = int(270 * facy);
+  scrr.w = scrr.h = int(100 * facy);
+  SDL_SoftStretchOr(tempSurface, &logo, screen, &scrr);
 
   SDL_Flip(screen); // show the screen
   SDL_Delay(1000);  // wait 1 second to be not too fast
