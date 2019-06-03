@@ -24,21 +24,21 @@ find out more.
 #include <sys/types.h>
 #endif
 
-#include <errno.h>
-#include "stdafx.h"
-#include "list.h"
 #include "DiskChoose.h"
+#include "list.h"
+#include "stdafx.h"
+#include <errno.h>
 
 #define MAX_FILENAME 36
 
 char *g_sDiskChooseMessages[] = {"Load state",
-				 "Save state",
-				 "",
-				 "",
-				 "",
-				 "Insert image into 800KB floppy drive",
-				 "Insert image into 140KB floppy drive",
-				 "Attach image as hard disk"};
+                                 "Save state",
+                                 "",
+                                 "",
+                                 "",
+                                 "Insert image into 800KB floppy drive",
+                                 "Insert image into 140KB floppy drive",
+                                 "Attach image as hard disk"};
 
 /////////////////////////////////////////////////////////////////////
 /* FONT prev decls */
@@ -63,15 +63,14 @@ int DiskChooseMaxEntries(SDL_Rect fm) {
 
 void DiskChoosePrintHeader(char *dir_text, int slot, SDL_Rect fm, double fs) {
   /* purpose for choosing file */
-  font_print_centered(g_ScreenWidth / 2, 2 * fm.y, g_sDiskChooseMessages[slot], screen, fs,
-                      fs);
+  font_print_centered(g_ScreenWidth / 2, 2 * fm.y, g_sDiskChooseMessages[slot],
+                      screen, fs, fs);
   /* directory location */
-  font_print_centered(g_ScreenWidth / 2, 4 * fm.y, dir_text, screen, fs,
-                      fs);
+  font_print_centered(g_ScreenWidth / 2, 4 * fm.y, dir_text, screen, fs, fs);
 }
 
-void DiskChoosePrintEntry(char *filename, const char *filesize, int y, SDL_Rect fm,
-			  double fs) {
+void DiskChoosePrintEntry(char *filename, const char *filesize, int y,
+                          SDL_Rect fm, double fs) {
   /* print file name
    * fm  font metrics advance leading width height (pre-scaled)
    * fs  font scale
@@ -99,8 +98,8 @@ void DiskChoosePrintEntry(char *filename, const char *filesize, int y, SDL_Rect 
 }
 
 void DiskChoosePrintPrompt(SDL_Rect fm, double fs) {
-    font_print_centered(g_ScreenWidth / 2, g_ScreenHeight - 2 * fm.h,
-                        "ENTER to choose, ESC to cancel", screen, fs, fs);
+  font_print_centered(g_ScreenWidth / 2, g_ScreenHeight - 2 * fm.h,
+                      "ENTER to choose, ESC to cancel", screen, fs, fs);
 }
 
 int getstat(char *catalog, char *fname, int *size) {
@@ -128,21 +127,22 @@ int getstat(char *catalog, char *fname, int *size) {
 ////////////////////////////////////////////////////////////////////////////////////////
 bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
                    char **filename, bool *isdir, int *index_file) {
-  /*  Parameters:
-   sx, sy - window size,
-   incoming_dir - in what dir find files,
-   slot - in what slot should an image go (common: #6 for 5.25' 140Kb floppy
-   disks, and #7 for hard-disks).
-     slot #5 - for 800Kb floppy disks, but we do not use them in Apple][?
-    (They are as a rule with .2mg extension)
-   index_file  - from which file we should start cursor (should be static and 0
-   when changing dir)
+  /*  Input:
+      sx, sy       - window size,
+      incoming_dir - in what dir find files,
+      slot         - in what slot should an image go;
+      #5 for 800Kb floppy disks,
+      #6 for 5.25' 140Kb floppy disks,
+      #7 for hard-disks.
+      index_file   - from which file we should start cursor
+      (should be static and 0 when changing dir)
 
-   Out:  filename  - chosen file name (or dir name)
-    isdir    - if chosen name is a directory
+      Output:
+      filename  - chosen file name (or dir name)
+      isdir    - if chosen name is a directory
   */
 
-    /* screen scale ratios */
+  /* screen scale ratios */
   double facx = double(g_ScreenWidth) / double(SCREEN_WIDTH);
   double facy = double(g_ScreenHeight) / double(SCREEN_HEIGHT);
 
@@ -157,7 +157,7 @@ bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
   fm.y = fm.h * 1.25;      /* leading */
 
   int files_in_screen = DiskChooseMaxEntries(fm);
-  
+
   /* Surface: */
   SDL_Surface *my_screen; // for background
 
@@ -186,17 +186,12 @@ bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
 
   // build prev dir
   if (strcmp(incoming_dir, "/")) {
-#if 0  
-    files.Add("..");
-    sizes.Add("<UP>");  // add sign of directory
-#else
     tmp = new char[3];
     strcpy(tmp, "..");
     files.Add(tmp);
     tmp = new char[5];
     strcpy(tmp, "<UP>");
     sizes.Add(tmp); // add sign of directory
-#endif
   }
   if (dp != NULL) {
     {
