@@ -631,8 +631,8 @@ void DiskSelectImage(int drive, LPSTR pszFilename) {
                                    //  printf("fullpath=%s\n", fullpath);
 
   while (isdir) {
-    if (!ChooseAnImage(g_ScreenWidth, g_ScreenHeight, fullpath, 6, &filename,
-                       &isdir, &findex)) {
+    if (!ChooseAnImage(g_ScreenWidth, g_ScreenHeight, fullpath, 6,
+		       &filename, &isdir, &findex)) {
       DrawFrameWindow();
       return; // if ESC was pressed, just leave
     }
@@ -671,10 +671,11 @@ void DiskSelectImage(int drive, LPSTR pszFilename) {
 
   int error = DiskInsert(drive, fullpath, 0, 1);
   if (!error) {
-    /*       filename[ofn.nFileOffset] = 0;
-           if (_tcsicmp(directory,filename))
-             RegSaveString(TEXT("Preferences"),REGVALUE_PREF_START_DIR,1,filename);*/
-
+#ifdef _WIN32
+    filename[ofn.nFileOffset] = 0;
+    if (_tcsicmp(directory,filename))
+      RegSaveString(TEXT("Preferences"),REGVALUE_PREF_START_DIR,1,filename);
+#endif
     // in future: save file name in registry for future fetching
     // for one drive will be one reg parameter
     //  RegSaveString(TEXT("Preferences"),REGVALUE_PREF_START_DIR, 1,filename);
@@ -721,8 +722,7 @@ void Disk_FTP_SelectImage(int drive) // select a disk image using FTP
   while (isdir) {
     //    printf("Disk_FTP_SelectImage: fullpath=%s\n", fullpath);
 
-    if (!ChooseAnImageFTP(g_ScreenWidth, g_ScreenHeight, fullpath, 6, &filename,
-                          &isdir, &findex)) {
+    if (!DiskFTPChooseAnImage(fullpath, 6, &filename, &isdir, &findex)) {
       DrawFrameWindow();
       return; // if ESC was pressed, just leave
     }

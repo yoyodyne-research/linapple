@@ -375,7 +375,7 @@ double DSUploadBuffer(short *buffer, unsigned len) {
   //  len *= 2; // stereo
   unsigned free = getBufferFree();
   if (len > free) {
-    std::cerr << "DEBUG overrun(1): " << len - free << std::endl;
+    std::cerr << "WARNING DSUploadBuffer audio overrun(1): " << len - free << std::endl;
   }
   unsigned num = std::min(len, free); // ignore overrun (drop samples)
   if ((writeIdx + num) < bufferSize) {

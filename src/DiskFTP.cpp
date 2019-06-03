@@ -1,17 +1,14 @@
 /*
-////////////////////////////////////////////////////////////////////////////
-////////////  Choose disk image for given slot number? ////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-//// Adapted for linapple - apple][ emulator for Linux by beom beotiger Nov 2007
-/////
-///////////////////////////////////////////////////////////////////////////////////////
-// Original source from one of Brain Games (http://www.braingames.getput.com)
-//  game Super Transball
-2.(http://www.braingames.getput.com/stransball2/default.asp)
-//
-// Brain Games crew creates brilliant retro-remakes! Please visit their site to
-find out more.
-//
+  Choose disk image for given slot number.
+
+  Adapted for linapple - apple][ emulator for Linux by beom beotiger Nov 2007
+
+  Original source from one of Brain Games (http://www.braingames.getput.com)
+  game Super Transball
+  2.(http://www.braingames.getput.com/stransball2/default.asp)
+
+  Brain Games crew creates brilliant retro-remakes!
+  Please visit their site to find out more.
 */
 
 /* March 2012 AD by Krez, Beom Beotiger */
@@ -20,124 +17,107 @@ find out more.
 #include <sys/stat.h>
 #include <time.h>
 
+#include "DiskChoose.h"
+#include "DiskFTP.h"
 #include "SDL.h"
 #include "ftpparse.h"
 #include "list.h"
 #include "md5.h"
 #include "stdafx.h"
-#include "DiskFTP.h"
 
-// how many file names we are able to see at once!
-#define FILES_IN_SCREEN 21
-// delay after key pressed (in milliseconds??)
-#define KEY_DELAY 25
 // define time when cache ftp dir.listing must be refreshed
 #define RENEW_TIME 24 * 3600
-// factor to scale text relative to font texture
-#define FONT_SCALE 1.0
+
 // longest displayable site path in chars
 #define FTP_DIR_MAX_LENGTH 60
 
-// name for FTP-directory listing
+/* storage for cache of FTP directory listings */
 TCHAR g_sFTPDirListing[512] = TEXT("cache/ftp.");
 
-/* messages denoting reason for choosing file */
-const char *message[] = {"Load snapshot",
-                         "Save snapshot",
-                         "",
-                         "",
-                         "",
-                         "Insert image into 800KB floppy drive",
-                         "Insert image into 140KB floppy drive",
-                         "Attach image as hard disk",
-                         0};
+typedef struct {
+  int x;
+  int y;
+} SDL_Point;
 
-typedef enum { STAT_ERROR, STAT_DIRECTORY, STAT_FILE } getstat_t;
+typedef enum { FTPSTAT_ERROR, FTPSTAT_DIRECTORY, FTPSTAT_FILE } ftpstat_t;
 
-int getstat(struct ftpparse *fp, int *size) {
-  /* stat FTP entry
-   * In:  entry to stat
-   * Out: getstat_t
+int ftpstat(struct ftpparse *fp, int *size) {
+  /* stat an FTP entry
+   * param fp  entry to stat
+   * return size  ftpstat_t
    */
   if (!fp->namelen)
-    return STAT_ERROR;
+    return FTPSTAT_ERROR;
   if (fp->flagtrycwd == 1)
     return 1; // can CWD, it is dir then
 
   if (fp->flagtryretr == 1) { // we're able to RETR, it's a file then?!
     if (size != NULL)
       *size = (int)(fp->size / 1024);
-    return STAT_FILE;
+    return FTPSTAT_FILE;
   }
-  return STAT_DIRECTORY;
+  return FTPSTAT_DIRECTORY;
 }
 
-
-void print_header(double sx, double sy, double facx, double facy, double k,
-			     char *ftp_dir_text, int slot)
-{  
-    // purpose for choosing file
-    font_print_centered(sx / 2, FONT_SIZE_Y * facy, message[slot],
-    screen, k,                    k);
-
-    // directory location on FTP site
-    font_print_centered(sx / 2, FONT_SIZE_Y * 3 * facy,
-						ftp_dir_text, screen, k, k);
+void strcpy_ftp_dir(char *ftp_dir_text, const char *ftp_dir) {
+  /* if possible, find string offset where site's local dir begins */
+  int found = 0;
+  int offset = 0;
+  for (unsigned int i = 0; i < strlen(ftp_dir); i++) {
+    if (ftp_dir[i] == '/') {
+      found++;
+    }
+    if (found == 3) {
+      offset = i;
+      break;
+    }
+  }
+  strncpy(ftp_dir_text, ftp_dir + offset, FTP_DIR_MAX_LENGTH);
 }
 
-  void strcpy_ftp_dir(char* ftp_dir_text, const char* ftp_dir)
-  {
-	  /* if possible, find string offset where site's local dir begins */
-	  std::string s(ftp_dir);
-	  int found = 0;
-	  int offset = 0;
-	  for (unsigned int i = 0; i < strlen(ftp_dir); i++) {
-		if (ftp_dir[i] == '/') {
-			found++;
-		}
-		if (found == 3) {
-			offset = i;
-			break;
-		}
-	  }
-	  strncpy(ftp_dir_text, ftp_dir + offset, FTP_DIR_MAX_LENGTH);
-  }
-
-bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot,
-					  char **filename, bool *isdir,
-					  int *index_file) {
+bool DiskFTPChooseAnImage(char *ftp_dir, int slot, char **name, bool *isdir,
+                          int *startindex) {
   /* Parameters:
-   * sx, sy      - window size,
+   * sx, g_ScreenHeight      - windaow size,
    * ftp_dir     - what FTP directory to use,
    * slot - in what slot should an image go?
-   *   5 for 800Kb floppy disks, //gs
-   *   6 for 5.25' 140Kb floppy disks, 
-   *   7 for hard-disks).
-   * index_file  - from which file we should start cursor
+   *   5 for 3.5 800Kb floppy disks,
+   *   6 for 5.25 140Kb floppy disks,
+   *   7 for hard disks.
+   * startindex  - from which file we should start cursor
    *   (should be static and 0 when changing dir)
-   * 
+   *
    * Out:
-   * filename    - chosen file name (or dir name)
+   * name        - chosen file name (or dir name)
    * isdir       - if chosen name is a directory
-  */
-  
-  /* screen scaling factors */
-  double facx = double(g_ScreenWidth) / double(SCREEN_WIDTH);
-  double facy = double(g_ScreenHeight) / double(SCREEN_HEIGHT);
-
-  /* scaling to pass to font drawing functions */
-  double k = min(facx, facy) * FONT_SCALE;
-
-  /* substring of ftp_dir to actually display */
-  char ftp_dir_text[FTP_DIR_MAX_LENGTH];
-     
-  SDL_Surface *my_screen;    // for background
-  struct ftpparse FTP_PARSE; // for parsing ftp directories
-  struct stat info;
+   */
 
   if (font_sfc == NULL)
     if (!fonts_initialization())
       return false;
+
+  /* screen scale ratios */
+  double facx = double(g_ScreenWidth) / double(SCREEN_WIDTH);
+  double facy = double(g_ScreenHeight) / double(SCREEN_HEIGHT);
+
+  /* uniform scaling, in scaled space, to pass to font drawing functions */
+  double fs = min(facx, facy) * FONT_SCALE;
+
+  /* store font size metrics in scaled screen space */
+  SDL_Rect fm;
+  fm.w = FONT_SIZE_X * fs; /* character width */
+  fm.h = FONT_SIZE_Y * fs; /* character height */
+  fm.x = fm.w;             /* advance */
+  fm.y = fm.h * 1.25;      /* leading */
+
+  int files_in_screen = DiskChooseMaxEntries(fm);
+  
+  /* substring of ftp_dir to actually display */
+  char ftp_dir_text[FTP_DIR_MAX_LENGTH];
+
+  SDL_Surface *my_screen;    // for background
+  struct ftpparse FTP_PARSE; // for parsing ftp directories
+  struct stat info;
 
   char tmpstr[512];
   char ftpdirpath[MAX_PATH];
@@ -173,12 +153,13 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot,
   SDL_BlitSurface(tempSurface, NULL, my_screen, NULL);
   SDL_BlitSurface(my_screen, NULL, screen, NULL); // show background
 
+  /* format a substring of the FTP path for printing */
   strcpy_ftp_dir(ftp_dir_text, ftp_dir);
-  print_header(sx, sy, facx, facy, k, ftp_dir_text, slot);
-  
-  font_print_centered(sx / 2, sy - 2 * FONT_SIZE_Y * facy,
-                      "Connecting to FTP server, please wait...",
-                      screen, k, k);
+  DiskChoosePrintHeader(ftp_dir_text, slot, fm, fs);
+
+  font_print_centered(g_ScreenWidth / 2, g_ScreenHeight - 2 * fm.h,
+                      "Connecting to FTP server, please wait...", screen, fs,
+                      fs);
   SDL_Flip(screen); // show the screen
 
   bool OKI;
@@ -190,8 +171,8 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot,
 
   if (OKI) { // error
     printf("Failed getting FTP directory %s to %s\n", ftp_dir, ftpdirpath);
-    font_print_centered(sx / 2, 30 * facy, "Failure. Press any key!", screen, k,
-                        k);
+    font_print_centered(g_ScreenWidth / 2, 30 * facy, "Failure! Press any key.",
+                        screen, fs, fs);
     SDL_Flip(screen);     // show the screen
     SDL_Delay(KEY_DELAY); // wait some time to be not too fast
 
@@ -229,7 +210,7 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot,
     memset(&FTP_PARSE, 0, sizeof(FTP_PARSE));
     ftpparse(&FTP_PARSE, tmp, strlen(tmp));
 
-    int what = getstat(&FTP_PARSE, NULL);
+    int what = ftpstat(&FTP_PARSE, NULL);
 
     if (strlen(FTP_PARSE.name) > 0 && what == 1) // is directory!
     {
@@ -264,7 +245,7 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot,
     memset(&FTP_PARSE, 0, sizeof(FTP_PARSE));
     ftpparse(&FTP_PARSE, tmp, strlen(tmp));
 
-    if ((getstat(&FTP_PARSE, &fsize) == 2)) // is normal file!
+    if ((ftpstat(&FTP_PARSE, &fsize) == 2)) // is normal file!
     {
       tmp = new char[strlen(FTP_PARSE.name) + 1]; // add this entity to list
       strcpy(tmp, FTP_PARSE.name);
@@ -287,10 +268,10 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot,
         }
   }
   //  Count out cursor position and file number output
-  act_file = *index_file;
+  act_file = *startindex;
   if (act_file >= files.Length())
     act_file = 0; // cannot be more than files in list
-  first_file = act_file - (FILES_IN_SCREEN / 2);
+  first_file = act_file - (files_in_screen / 2);
   if (first_file < 0)
     first_file = 0; // cannot be negativ...
 
@@ -301,53 +282,39 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot,
     SDL_BlitSurface(my_screen, NULL, screen, NULL); // show background
 
     strcpy_ftp_dir(ftp_dir_text, ftp_dir);
-    print_header(sx, sy, facx, facy, k, ftp_dir_text, slot);
-	
+    DiskChoosePrintHeader(ftp_dir_text, slot, fm, fs);
+
     files.Rewind(); // from start
     sizes.Rewind();
     i = 0;
 
-    double origin[] = {2 * FONT_SIZE_X * facx, 45 * facy};
-
     while (files.Iterate(tmp)) {
       sizes.Iterate(siz); // also fetch size string
 
-      /* there are FILES_IN_SCREEN items on screen at a time */
-      if (i >= first_file && i < first_file + FILES_IN_SCREEN) {
+      /* there are files_in_screen items on screen at a time */
+      if (i >= first_file && i < first_file + files_in_screen) {
+        unsigned int y = (i - first_file + 5) * fm.y;
 
         if (i == act_file) {
           /* highlight row under cursor */
           SDL_Rect r;
           r.x = 0;
-          r.y = origin[1] + (i - first_file) * 15 * facy - 1;
-          r.w = sx;
-          r.h = (FONT_SIZE_Y + 4) * facy;
+          /* highlight is 4 pixels taller than text */
+          r.y = y - 2;
+          r.w = g_ScreenWidth;
+          /* highlight is 4 pixels taller than text */
+          r.h = (fm.h + 4);
           SDL_FillRect(screen, &r, SDL_MapRGB(screen->format, 63, 63, 63));
         } /* if */
 
-        // print file name
-        int ch = 0;
-        // cut-off too long string
-        if (strlen(tmp) > 46) {
-          ch = tmp[46];
-          tmp[46] = 0;
-        }
-        unsigned int y = origin[1] + (i - first_file) * 15 * facy;
-        // show name
-        font_print(10 * facx, y, tmp, screen, k, k);
-        // show info (dir or size)
-        font_print(sx - 70 * facx, y, siz, screen, k, k);
-        // restore cut-off char
-        if (ch)
-          tmp[46] = ch;
+        DiskChoosePrintEntry(tmp, siz, y, fm, fs);
 
       } /* if */
       i++;
     } /* while */
 
-    font_print_centered(sx / 2, sy - 2 * FONT_SIZE_Y * facy,
-                        "ENTER to choose, ESC to cancel", screen, k, k);
-
+    DiskChoosePrintPrompt(fm, fs);
+    
     SDL_Flip(screen);     // show the screen
     SDL_Delay(KEY_DELAY); // wait some time to be not too fast
 
@@ -374,12 +341,12 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot,
     if (keyboard[SDLK_DOWN] || keyboard[SDLK_RIGHT]) {
       if (act_file < (files.Length() - 1))
         act_file++;
-      if (act_file >= (first_file + FILES_IN_SCREEN))
-        first_file = act_file - FILES_IN_SCREEN + 1;
+      if (act_file >= (first_file + files_in_screen))
+        first_file = act_file - files_in_screen + 1;
     } /* if */
 
     if (keyboard[SDLK_PAGEUP]) {
-      act_file -= FILES_IN_SCREEN;
+      act_file -= files_in_screen;
       if (act_file < 0)
         act_file = 0;
       if (act_file < first_file)
@@ -387,24 +354,24 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot,
     } /* if */
 
     if (keyboard[SDLK_PAGEDOWN]) {
-      act_file += FILES_IN_SCREEN;
+      act_file += files_in_screen;
       if (act_file >= files.Length())
         act_file = (files.Length() - 1);
-      if (act_file >= (first_file + FILES_IN_SCREEN))
-        first_file = act_file - FILES_IN_SCREEN + 1;
+      if (act_file >= (first_file + files_in_screen))
+        first_file = act_file - files_in_screen + 1;
     } /* if */
 
     // choose an item?
     if (keyboard[SDLK_RETURN]) {
       // dup string from selected file name
-      *filename = strdup(php_trim(files[act_file], strlen(files[act_file])));
-      //      printf("files[act_file]=%s, *filename=%s\n\n", files[act_file],
-      //      *filename);
+      *name = strdup(php_trim(files[act_file], strlen(files[act_file])));
+      //      printf("files[act_file]=%s, *name=%s\n\n", files[act_file],
+      //      *name);
       if (!strcmp(sizes[act_file], "<DIR>") || !strcmp(sizes[act_file], "<UP>"))
         *isdir = true;
       else
         *isdir = false; // this is directory (catalog in Apple][ terminology)
-      *index_file = act_file; // remember current index
+      *startindex = act_file; // remember current index
       files.Delete();
       sizes.Delete();
       SDL_FreeSurface(my_screen);
@@ -420,7 +387,7 @@ bool ChooseAnImageFTP(int sx, int sy, char *ftp_dir, int slot,
     if (keyboard[SDLK_END]) {
       /* go to the last possible file in list */
       act_file = files.Length() - 1;
-      first_file = act_file - FILES_IN_SCREEN + 1;
+      first_file = act_file - files_in_screen + 1;
       if (first_file < 0)
         first_file = 0;
     } /* if */

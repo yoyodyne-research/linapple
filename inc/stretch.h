@@ -82,6 +82,8 @@ int SDL_SoftStretchMono8(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
 
 #define FONT_SIZE_X 7
 #define FONT_SIZE_Y 8
+// amount to resize in choosers
+#define FONT_SCALE 1.25
 // chars in row in font bitmap
 #define CHARS_IN_ROW 39
 extern SDL_Surface *font_sfc;
