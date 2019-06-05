@@ -973,6 +973,19 @@ void FrameSaveBMP(void) {
   i++;
 }
 
+void run() {
+  if (g_nAppMode == MODE_LOGO)
+    DiskBoot();
+  else if (g_nAppMode == MODE_RUNNING)
+    ResetMachineState();
+  if ((g_nAppMode == MODE_DEBUG) || (g_nAppMode == MODE_STEPPING))
+    DebugEnd();
+  g_nAppMode = MODE_RUNNING;
+  DrawStatusArea(/*(HDC)0,*/ DRAW_TITLE);
+  VideoRedrawScreen();
+  g_bResetTiming = true;
+}
+
 //===========================================================================
 void ProcessButtonClick(int button, int mod) {
   // button - number of button pressed (starting with 0, which means F1
@@ -995,23 +1008,22 @@ void ProcessButtonClick(int button, int mod) {
 
   case BTN_RUN: // F2 - Run that thing! Or Shift+2 ReloadConfig and run it
                 // anyway!
+#ifdef RETROPIE
+    if (mod & KMOD_SHIFT) {
+      restart = 1; // keep up flag of restarting
+      qe.type = SDL_QUIT;
+      SDL_PushEvent(&qe); // push quit event
+    } else run();
+#else    
     if ((mod & (KMOD_LCTRL)) == (KMOD_LCTRL) ||
-        (mod & (KMOD_RCTRL)) == (KMOD_RCTRL)) {
-      if (g_nAppMode == MODE_LOGO)
-        DiskBoot();
-      else if (g_nAppMode == MODE_RUNNING)
-        ResetMachineState();
-      if ((g_nAppMode == MODE_DEBUG) || (g_nAppMode == MODE_STEPPING))
-        DebugEnd();
-      g_nAppMode = MODE_RUNNING;
-      DrawStatusArea(/*(HDC)0,*/ DRAW_TITLE);
-      VideoRedrawScreen();
-      g_bResetTiming = true;
-    } else if (mod & KMOD_SHIFT) {
+        (mod & (KMOD_RCTRL)) == (KMOD_RCTRL)) { 
+      run();
+    }  else if (mod & KMOD_SHIFT) {
       restart = 1; // keep up flag of restarting
       qe.type = SDL_QUIT;
       SDL_PushEvent(&qe); // push quit event
     }
+#endif
     break;
 
   case BTN_DRIVE1:

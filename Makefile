@@ -44,13 +44,17 @@ CURL_CFLAGS = $(shell $(CURL_CONFIG) --cflags)
 CURL_LIBS = $(shell $(CURL_CONFIG) --libs)
 
 CFLAGS      := -Wall -Wno-write-strings -ansi
-#PROFILING
+
+# profiling
 #CFLAGS      += -O0 -pg -ggdb -c
 #LFLAGS      := -pg
-#DEBUGGING
+
+# debugging
 #CFLAGS      += -O0 -ggdb -c -finstrument-functions
-#OPTIMIZED
+
+# optimized
 CFLAGS      += -O3 -c -DASSET_DIR=\"$(ASSET_DIR)\" -DRESOURCE_INIT_DIR=\"$(RESOURCE_INIT_DIR)\"
+
 CFLAGS 		+= $(SDL_CFLAGS)
 CFLAGS 		+= $(CURL_CFLAGS)
 
