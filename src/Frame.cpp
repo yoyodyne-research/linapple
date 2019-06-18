@@ -488,36 +488,53 @@ void FrameShowHelpScreen(int sx, int sy) // sx, sy - sizes of current window (sc
 {
   // on pressing F1 button shows help screen
 
-  const char * HelpStrings[] = {
-    "Welcome to LinApple - Apple][ emulator for Linux!",
-    "Conf file is linapple.conf in current directory by default",
-    "Hugest archive of Apple][ stuff you can find at ftp.apple.asimov.net",
-    " F1 - This help",
-    " Ctrl+F2 - Cold reset",
-    " Shift+F2 - Reload conf file and restart",
-    " F3, F4 - Choose an image file name for floppy disk",
-    "             in Slot 6 drive 1 or 2 respectively",
-    " Shift+F3, Shift+F4 - The same thing for Apple hard disks",
-    "                         (in Slot 7)",
-    " F5 - Swap drives for Slot 6",
-    " F6 - Toggle fullscreen mode",
-    " F7 - Reserved for Debugger!",
-    " F8 - Save current screen as a .bmp file",
-    " Shift+F8 - Save settings changable at runtime in conf file",
-    " F9 - Cycle through various video modes",
-    " F10 - Quit emulator",
-    " F11 - Save current state to file, Alt+F11 - quick save",
-    " F12 - Reload it from file, Alt+F12 - quick load",
-    " Ctrl+F12 - Hot reset",
-    "  Pause - Pause emulator",
-    "  Scroll Lock - Toggle full speed",
-    "Num pad keys:",
-    "  Grey + - Speed up emulator",
-    "  Grey - - Speed it down",
-    "  Grey * - Normal speed"
-  };
+  if(font_sfc == NULL)
+    if(!fonts_initialization()) {
+      fprintf(stderr, "[help  ] aborting, font file was not loaded!\n");
+      return;    //if we don't have a fonts, we just can do none
+    }
 
-  //   const int PositionsY[] = { 7, 15, 26 };
+  double facx = double(g_ScreenWidth) / double(SCREEN_WIDTH);
+  double facy = double(g_ScreenHeight) / double(SCREEN_HEIGHT);
+  double fac = min(facx, facy);  // Scale text uniformly.
+
+  const char * helpStrings[] = {
+    "          F1  Show this help screen",
+    "     Ctrl-F2  Reset",
+    "    Shift-F2  Reload configuration and reset",
+    "",
+    "          F3  Insert a disk image into drive 1",
+    "    Shift-F3  Connect a hard disk image as drive 1",
+    "          F4  Insert a disk image into drive 2",
+    "    Shift-F4  Connect a hard disk image as drive 2",
+    "          F5  Swap floppy drives",
+    "",
+    "          F6  Toggle fullscreen",
+    "          F8  Save screenshot",
+    "    Shift-F8  Save configuration",
+    "          F9  Cycle through video modes",
+    "",
+    "         F10  Load state",
+    "     Alt-F10  Quick load state",
+    "    Ctrl-F10  Hot Reset",
+    "         F11  Save state",
+    "     Alt-F11  Quick save state",
+    "         F12  Quit emulator",
+    "",
+    "       Pause  Pause emulation",
+    " Scroll Lock  Toggle maximum emulation speed",
+    "    Numpad +  Speed up emulation",
+    "    Numpad -  Slow down emulation",
+    "    Numpad *  Emulate at normal speed"
+    "",
+  };
+  const unsigned int helpStringCount = 27;
+  const double helpStringScale = 1.25;
+
+  const double helpStringOrigin[2] = { 8.0 * fac, 4.0 * fac };
+  // FIXME function of font metric
+  const double fontHeight = 10.0 * helpStringScale * fac;
+  const double helpStringLeading = fontHeight;
 
   SDL_Surface *my_screen;  // for background
   SDL_Surface *tempSurface = NULL;  // temporary surface
@@ -545,23 +562,11 @@ void FrameShowHelpScreen(int sx, int sy) // sx, sy - sizes of current window (sc
 
   SDL_BlitSurface(my_screen, NULL, screen, NULL);    // show background
 
-  double facx = double(g_ScreenWidth) / double(SCREEN_WIDTH);
-  double facy = double(g_ScreenHeight) / double(SCREEN_HEIGHT);
-
-  font_print_centered(sx/2, int(5*facy), (char*)HelpStrings[0], screen, 1.5*facx, 1.3*facy);
-  font_print_centered(sx/2, int(20*facy), (char*)HelpStrings[1], screen, 1.3*facx, 1.2*facy);
-  font_print_centered(sx/2, int(30*facy), (char*)HelpStrings[2], screen, 1.2*facx, 1.0*facy);
-
-  int Help_TopX = int(45*facy);
-  int i;
-  for(i =  3; i < 25; i++)
-    font_print(4, Help_TopX + (i - 3) * 15 * facy, (char*)HelpStrings[i], screen, 1.5*facx, 1.5*facy); // show keys
-
-  // show frames
-  rectangle(screen, 0, Help_TopX - 5, /*SCREEN_WIDTH*/g_ScreenWidth - 1, int(335*facy), SDL_MapRGB(screen->format, 255, 255, 255));
-  rectangle(screen, 1, Help_TopX - 4, /*SCREEN_WIDTH*/g_ScreenWidth, int(335*facy), SDL_MapRGB(screen->format, 255, 255, 255));
-
-  rectangle(screen, 1, 1, /*SCREEN_WIDTH*/g_ScreenWidth - 2, (Help_TopX - 8), SDL_MapRGB(screen->format, 255, 255, 0));
+  // Show F-key legend.
+  for(unsigned int i = 0; i < helpStringCount; i++)
+    font_print(helpStringOrigin[0],
+	       helpStringOrigin[1]+helpStringLeading*(i+1),
+	       (char*)helpStrings[i], screen, fac, fac);
 
   tempSurface = SDL_DisplayFormat(assets->icon);
   SDL_Rect logo, scrr;
