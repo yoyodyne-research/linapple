@@ -376,7 +376,7 @@ void HD_FTP_Select(int nDrive)
   {
     printf("HD_FTP_Select: fullpath=%s\n", fullpath);
 
-    if(!ChooseAnImageFTP(g_ScreenWidth, g_ScreenHeight, fullpath, 7, &filename, &isdir, &findex)) {
+    if(!DiskFTPChooseAnImage(fullpath, 7, &filename, &isdir, &findex)) {
       DrawFrameWindow();
       return;  // if ESC was pressed, just leave
     }
