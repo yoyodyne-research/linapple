@@ -415,7 +415,6 @@ bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
 //    printf("We've printed some messages, go to file list!\n");
 // show all fetched dirs and files
 // topX of first fiel visible
-    int TOPX  = int(45*facy);
 
     while(files.Iterate(tmp)) {
 

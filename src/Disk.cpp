@@ -311,7 +311,6 @@ static void WriteTrack (int iDrive)
 
 //===========================================================================
 void DiskBoot () {
-
   // THIS FUNCTION RELOADS A PROGRAM IMAGE IF ONE IS LOADED IN DRIVE ONE.
   // IF A DISK IMAGE OR NO IMAGE IS LOADED IN DRIVE ONE, IT DOES NOTHING.
   if (g_aFloppyDisk[0].imagehandle && ImageBoot(g_aFloppyDisk[0].imagehandle))
@@ -764,7 +763,7 @@ void Disk_FTP_SelectImage (int drive)  // select a disk image using FTP
   {
 //    printf("Disk_FTP_SelectImage: fullpath=%s\n", fullpath);
 
-    if(!ChooseAnImageFTP(g_ScreenWidth, g_ScreenHeight, fullpath, 6, &filename, &isdir, &findex)) {
+    if(!DiskFTPChooseAnImage(fullpath, 6, &filename, &isdir, &findex)) {
       DrawFrameWindow();
       return;  // if ESC was pressed, just leave
     }
