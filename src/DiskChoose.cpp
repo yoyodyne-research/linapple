@@ -57,14 +57,14 @@
 
 #define MAX_FILENAME    36
 
-char *g_sDiskChooseMessages[] = {"Load state",
-                                 "Save state",
+char *g_sDiskChooseMessages[] = {"             Load state             ",
+                                 "             Save state             ",
                                  "",
                                  "",
                                  "",
                                  "Insert image into 800KB floppy drive",
                                  "Insert image into 140KB floppy drive",
-                                 "Attach image as hard disk"};
+                                 "      Attach image as hard disk     "};
 
 /////////////////////////////////////////////////////////////////////
 /* FONT prev decls */

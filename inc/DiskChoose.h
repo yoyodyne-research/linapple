@@ -5,8 +5,6 @@
 // delay after key pressed (in milliseconds??)
 #define KEY_DELAY 25
 
-extern char *g_sDiskChooseMessages[8];
-
 bool ChooseAnImage(int sx, int sy, char *incoming_dir, int slot,
                    char **filename, bool *isdir, int *index_file);
 int DiskChooseMaxEntries(SDL_Rect fm);
