@@ -903,6 +903,8 @@ int main(int argc, char *argv[]) {
     config.SetRegistryPath(szConfigurationFile);
   }
   registry = fopen(config.GetRegistryPath().c_str(), "rt");
+  if (!registry)
+    printf("could not open config file at %s\n", config.GetRegistryPath().c_str());
 
 #if DBG_CALC_FREQ
   //QueryPerformanceFrequency((LARGE_INTEGER*)&g_nPerfFreq);

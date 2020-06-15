@@ -11,25 +11,80 @@
 #include <fcntl.h>
 #include <cstdio>
 #include <stdexcept>
+#include <fstream>
 
 #include "config.h"
 
-using namespace std;
-
 Config::Config()
 {
+	std::string userDirectory(USER_DIRECTORY_NAME);
+	m_optsFilePath = GetHomePath() + userDirectory;
+	
+	m_regSearchPaths.clear();
+	m_regSearchPaths.push_back(m_optsFilePath);
+	// FIXME can this be described relative to the binary?
+	m_regSearchPaths.push_back("/usr/local/etc/linapple");
+	m_regSearchPaths.push_back(INSTALL_DIRECTORY_NAME);
+
+	m_resSearchPaths.clear();
+	m_resSearchPaths.push_back(m_optsFilePath);
+	// FIXME can this be described relative to the binary?
+	m_resSearchPaths.push_back("/usr/local/share/linapple");
+	m_resSearchPaths.push_back("/usr/share");
+
+	m_regFilePath = FindRegistryPath();
+
+	std::cout << "conf: " << m_regFilePath << std::endl;
+}
+
+Config::~Config()
+{
+	m_regSearchPaths.clear();
+	m_resSearchPaths.clear();
 }
 
 std::string Config::GetUserFilePath()
 {
-	m_optsFilePath = GetHomePath() + USER_DIRECTORY_NAME;
-	return m_optsFilePath.c_str();
+	return m_optsFilePath;
+}
+
+std::string Config::FindDefaultDsk()
+{
+	return FindFile(std::string(DEFAULT_DSK), m_resSearchPaths);
+}
+
+std::string Config::FindRegistryPath()
+{
+	return FindFile(std::string(REGISTRY_NAME), m_regSearchPaths);
+}
+
+std::string Config::FindFile(std::string filename, std::vector<std::string> paths)
+{
+	std::string match;
+	std::vector<std::string>::iterator it;
+
+	match.clear();
+	for (it = paths.begin();
+	     it != paths.end();
+	     it++)
+	{
+		std::string path = *it + "/" + filename;
+		std::cout << "checking: " << path << std::endl;
+		std::ifstream ifs(path.c_str());
+		if (ifs)
+		{
+			// A non-null stream means a file is there.
+			match = path;
+			std::cout << "found: " << match << std::endl;
+			break;
+		}
+	}
+	return match;
 }
 
 std::string Config::GetRegistryPath()
 {
-	m_regFilePath = GetUserFilePath() + REGISTRY_NAME;
-	return m_regFilePath.c_str();
+	return m_regFilePath;
 }
 
 void Config::SetRegistryPath(std::string path)
@@ -87,17 +142,16 @@ bool Config::ValidateUserDirectory()
 // Looks like there's an official way to copy all files in a directory
 // for c++17 using filesystem::, but I just want something that's
 // going to work.
-static const char *files[] =
-{
-  "Master.dsk",
-  "linapple.conf",
-  ""
-};
+// static const char *files[] =
+// {
+//   "Master.dsk",
+//   "linapple.conf",
+//   ""
+// };
 
 	bool bResult = false;
 	struct stat buffer;
-	std::string userDir = GetHomePath();
-	userDir += USER_DIRECTORY_NAME;
+ 	std::string userDir = m_optsFilePath;
 	std::string installDir = GetInstallPath();
 
 	// Check that the entire subtree exists
@@ -115,21 +169,23 @@ static const char *files[] =
 		mkdir((userDir + FTP_DIRECTORY_NAME).c_str(), S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
         }
 
-        cout << "Copying Files" << std::endl;
+#ifndef GALA
+	std::cout << "Copying Files" << std::endl;
         for( unsigned int i = 0; *files[ i ]; i++ ) {
-            string src = (GetInstallPath() + files[ i ]);
-            string dest = (GetUserFilePath() + files[ i ]);
+            std::string src = (GetInstallPath() + files[ i ]);
+            std::string dest = (GetUserFilePath() + files[ i ]);
             if (stat (dest.c_str(), &buffer) == 0) {
                 // It's already there.
                 continue;
             }
             if (!(stat (src.c_str(), &buffer) == 0)) {
-                cout << "Could not stat " << src << "." << std::endl;
-                cout << "Please ensure " << GetInstallPath() << " exists and contains the linapple resource files." << std::endl;
+                std::cout << "Could not stat " << src << "." << std::endl;
+                std::cout << "Please ensure " << GetInstallPath() << " exists and contains the linapple resource files." << std::endl;
                 throw std::runtime_error("could not copy resource files");
             }
             CopyFile(src, dest);
         }
+#endif
 
 	return bResult;
 }
