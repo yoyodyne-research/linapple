@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include "ini.h"
 
 #ifdef GALA
 #define USER_DIRECTORY_NAME "/.config/linapple/"
@@ -34,6 +35,10 @@ class Config
 
 		bool ValidateUserDirectory();
 		bool CopyFile(std::string source, std::string dest);
+  std::string Get(std::string key);
+  bool GetBoolean(std::string key);
+  float GetFloat(std::string key);
+  int GetInteger(std::string key);
 		std::string GetUserFilePath();
 		std::string GetRegistryPath();
 		void SetRegistryPath(std::string path);
@@ -43,9 +48,16 @@ class Config
 		std::string FindRegistryPath();
 		std::string GetHomePath();
 		std::string GetInstallPath();
+		void Read();
+		void Dump();
 	private:
-		std::string m_optsFilePath;
+  std::map<const char*, bool> m_b;
+std::map<const char*, float> m_f;
+					     std::map<const char*, int> m_i;
+std::map<const char*, std::string> m_s;
+  std::string m_optsFilePath;
 		std::string m_regFilePath;
 		std::vector<std::string> m_regSearchPaths;  // aka /etc et al
 		std::vector<std::string> m_resSearchPaths;  // aka /usr/share et al
+		INIReader *conf;
 };
