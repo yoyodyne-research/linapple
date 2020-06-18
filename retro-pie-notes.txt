@@ -33,3 +33,20 @@ to this..
     <directlaunch/>
   </system>
 
+
+== Dispmanx and video aspect ratio
+
+Dispmanx is used to scale the emulator's video output to fullscreen,
+which stretches the video frame to fit the display in both dimensions.
+On HD and other 16:9 displays, video will be horizontally stretched.
+
+If you want aspect-corrected video, an alternative method to
+fill the display vertically is to set "Screen Height" to your
+display's vertical resolution and then set "Screen Width" to 1.33
+times the height. On a 1920x1080 HD display, this would be
+
+  Screen Width  = 1440
+  Screen Height = 1080
+
+Make this change in /opt/retropie/configs/apple2/linapple.conf .
+
