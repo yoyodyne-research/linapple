@@ -49,4 +49,8 @@ times the height. On a 1920x1080 HD display, this would be
   Screen Height = 1080
 
 Make this change in /opt/retropie/configs/apple2/linapple.conf .
+Then, to defeat the fill scaling that `dispmanx` does, remove linapple
+from the list of dispmanx platforms. For you textfile editors, that's
+in /opt/retropie/configs/all/dispmanx.cfg.
+
 
