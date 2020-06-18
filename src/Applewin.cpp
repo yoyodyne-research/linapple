@@ -1,17 +1,18 @@
 /*
-AppleWin : An Apple //e emulator for Windows
+LinApple : An Apple //e emulator for Windows
 
+Adapted from Applewin:
 Copyright (C) 1994-1996, Michael O'Brien
 Copyright (C) 1999-2001, Oliver Schmidt
 Copyright (C) 2002-2005, Tom Charlesworth
 Copyright (C) 2006-2007, Tom Charlesworth, Michael Pohoreski
 
-AppleWin is free software; you can redistribute it and/or modify
+LinApple is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
-AppleWin is distributed in the hope that it will be useful,
+LinApple is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -21,23 +22,17 @@ along with AppleWin; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/* Description: main
+/*
+ * Description: main
  *
- * Author: Various
+ * Author: various
+ *
+ * History:
+ * Adaptation for SDL and POSIX (l) by beom beotiger, Nov-Dec 2007, krez beotiger March 2012 AD
+ * Linappple-pie was adapted in OCT 2015 for use with Retropie by Mark Ormond. 
  */
 
-/* Adaptation for SDL and POSIX (l) by beom beotiger, Nov-Dec 2007, krez beotiger March 2012 AD */
-/*
-
-Linappple-pie was adapted in OCT 2015 for use with Retropie.
-By Mark Ormond. 
-*/
-
-
 #include "stdafx.h"
-//#pragma  hdrstop
-#include "MouseInterface.h"
-// for time logging
 #include <time.h>
 #include <sys/time.h>
 #include <curl/curl.h>
@@ -46,6 +41,8 @@ By Mark Ormond.
 #include <strings.h>
 #include <fstream>
 
+#include "MouseInterface.h"
+#include "cli.h"
 
 //char VERSIONSTRING[] = "xx.yy.zz.ww";
 
@@ -455,7 +452,6 @@ void LoadConfiguration ()
   LOAD(TEXT("JoyExitButton0"),&joyexitbutton0);
   LOAD(TEXT("JoyExitButton1"),&joyexitbutton1);
   
-  
   if (joytype[0]==1 ) printf ("Joystick 1 Index # = %i, Name = %s \nButton 1 = %i, Button 2 = %i \nAxis 0 = %i,Axis 1 = %i\n",joy1index,SDL_JoystickName(joy1index),joy1button1, joy1button2,joy1axis0,joy1axis1);   
   if (joytype[1]==1 )printf ("Joystick 2 Index # = %i, Name = %s \nButton 1 = %i \nAxis 0 = %i,Axis 1 = %i\n",joy2index,SDL_JoystickName(joy2index),joy2button1,joy2axis0,joy2axis1);
   
@@ -463,7 +459,7 @@ void LoadConfiguration ()
 
   DWORD dwSerialPort;
   LOAD(TEXT("Serial Port")       ,&dwSerialPort);
-  sg_SSC.SetSerialPort(dwSerialPort); // ----------- why it is here????
+  sg_SSC.SetSerialPort(dwSerialPort);
 
   LOAD(TEXT("Emulation Speed")   ,&g_dwSpeed);
 
@@ -521,7 +517,7 @@ void LoadConfiguration ()
   }
 
   dwTmp = 0;
-  LOAD(TEXT("Boot at Startup") ,&dwTmp);	//
+  LOAD(TEXT("Boot at Startup") ,&dwTmp);
   if ((dwTmp) || (autoboot))
   
   {
@@ -719,94 +715,10 @@ void LoadConfiguration ()
 
 }
 
-//===========================================================================
-void RegisterExtensions ()
-{ // TO DO: register extensions for KDE or GNOME desktops?? Do not know, if it is sane idea. He-he. --bb
-
-
-// 	TCHAR szCommandTmp[MAX_PATH];
-// 	GetModuleFileName((HMODULE)0,szCommandTmp,MAX_PATH);
-//
-// 	TCHAR command[MAX_PATH];
-// 	wsprintf(command, "\"%s\"",	szCommandTmp);	// Wrap	path & filename	in quotes &	null terminate
-//
-// 	TCHAR icon[MAX_PATH];
-// 	wsprintf(icon,TEXT("%s,1"),(LPCTSTR)command);
-//
-// 	_tcscat(command,TEXT(" \"%1\""));			// Append "%1"
-//
-// 	RegSetValue(HKEY_CLASSES_ROOT,".bin",REG_SZ,"DiskImage",10);
-// 	RegSetValue(HKEY_CLASSES_ROOT,".do"	,REG_SZ,"DiskImage",10);
-// 	RegSetValue(HKEY_CLASSES_ROOT,".dsk",REG_SZ,"DiskImage",10);
-// 	RegSetValue(HKEY_CLASSES_ROOT,".nib",REG_SZ,"DiskImage",10);
-// 	RegSetValue(HKEY_CLASSES_ROOT,".po"	,REG_SZ,"DiskImage",10);
-// //	RegSetValue(HKEY_CLASSES_ROOT,".aws",REG_SZ,"DiskImage",10);	// TO DO
-// //	RegSetValue(HKEY_CLASSES_ROOT,".hdv",REG_SZ,"DiskImage",10);	// TO DO
-//
-// 	RegSetValue(HKEY_CLASSES_ROOT,
-// 				"DiskImage",
-// 				REG_SZ,"Disk Image",21);
-//
-// 	RegSetValue(HKEY_CLASSES_ROOT,
-// 				"DiskImage\\DefaultIcon",
-// 				REG_SZ,icon,_tcslen(icon)+1);
-//
-// 	RegSetValue(HKEY_CLASSES_ROOT,
-// 				"DiskImage\\shell\\open\\command",
-// 				REG_SZ,command,_tcslen(command)+1);
-//
-// 	RegSetValue(HKEY_CLASSES_ROOT,
-// 				"DiskImage\\shell\\open\\ddeexec",
-// 				REG_SZ,"%1",3);
-//
-// 	RegSetValue(HKEY_CLASSES_ROOT,
-// 				"DiskImage\\shell\\open\\ddeexec\\application",
-// 				REG_SZ,"applewin",9);
-//
-// 	RegSetValue(HKEY_CLASSES_ROOT,
-// 				"DiskImage\\shell\\open\\ddeexec\\topic",
-// 				REG_SZ,"system",7);
-}
-
-//===========================================================================
-
-//LPSTR GetNextArg(LPSTR lpCmdLine)
-//{
-	// Sane idea: use getoptlong as command-line parameter preprocessor. Use it at your health. Ha. --bb
-
-/*
-	int bInQuotes = 0;
-
-	while(*lpCmdLine)
-	{
-		if(*lpCmdLine == '\"')
-		{
-			bInQuotes ^= 1;
-			if(!bInQuotes)
-			{
-				*lpCmdLine++ = 0x00;	// Assume end-quote is end of this arg
-				continue;
-			}
-		}
-
-		if((*lpCmdLine == ' ') && !bInQuotes)
-		{
-			*lpCmdLine++ = 0x00;
-			break;
-		}
-
-		lpCmdLine++;
-	}
-
-	return lpCmdLine;
-*/
-//}
 
 //FILE *spMono, *spStereo;
 
-//---------------------------------------------------------------------------
-
-int main(int argc, char * lpCmdLine[])
+int main(int argc, char *argv[])
 {
 //		reading FullScreen and Boot from conf file?
 //	bool bSetFullScreen = false;
@@ -838,95 +750,21 @@ int main(int argc, char * lpCmdLine[])
                   bool bBenchMark = false;
 //	bool bBenchMark = (argc > 1 &&
 //		!strcmp(lpCmdLine[1],"-b"));	// if we should start benchmark (-b in command line string)
- 
-                while ((opt = getopt (argc, lpCmdLine, "1:2:rbhf")) != -1)
-                {
-                switch (opt)
-                       {
-                    case '1':
-                        Disk1 = optarg;
-                        argdisks = true;
-                        break;
-                    case '2':
-                        Disk2 = optarg;
-                        argdisks2 = true;
-                        break;
-                    case 'r':
-                    autoboot = true;
-                    break;
-                    case 'b':
-                       bBenchMark = true;
-                       printf("benchmark");
-                       break;
-                    case 'h':
-                       printf("Linapple command options..\n\n -h Show this help message\n -1 Mount disk image in first drive\n -2 Mount disk image in second drive\n -r Auto start emulation\n -b Benchmark and quit\n\n");
-	     return 0;
-                       break;
-                    case 'f':
-                        fullscreenboot =true;
-                        break;
-	    }
-                }
-// I will remake this using getopt and getoptlong!
-/*
-	while(*lpCmdLine)
-	{
-		LPSTR lpNextArg = GetNextArg(lpCmdLine);
 
-		if(strcmp(lpCmdLine, "-d1") == 0)
-		{
-			lpCmdLine = lpNextArg;
-			lpNextArg = GetNextArg(lpCmdLine);
-			szImageName_drive1 = lpCmdLine;
-			if(*szImageName_drive1 == '\"')
-				szImageName_drive1++;
-		}
-		else if(strcmp(lpCmdLine, "-d2") == 0)
-		{
-			lpCmdLine = lpNextArg;
-			lpNextArg = GetNextArg(lpCmdLine);
-			szImageName_drive2 = lpCmdLine;
-			if(*szImageName_drive2 == '\"')
-				szImageName_drive2++;
-		}
-		else if(strcmp(lpCmdLine, "-f") == 0)
-		{
-			bSetFullScreen = true;
-		}
-		else if((strcmp(lpCmdLine, "-l") == 0) && (g_fh == NULL))
-		{
-			g_fh = fopen("AppleWin.log", "a+t");	// Open log file (append & text g_nAppMode)
-// Start of Unix(tm) specific code
-			struct timeval tv;
-			struct tm * ptm;
-			char time_str[40];
-			gettimeofday(&tv, NULL);
-			ptm = localtime(&tv.tvsec);
-			strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", ptm);
-// end of Unix(tm) specific code
-			fprintf(g_fh,"*** Logging started: %s\n",time_str);
-		}
-		else if(strcmp(lpCmdLine, "-m") == 0)
-		{
-			g_bDisableDirectSound = true; // without direct sound? U-u-u-u-uuuuuuuhhhhhhhhh --bb
-		}
-#ifdef RAMWORKS
-		else if(strcmp(lpCmdLine, "-r") == 0)		// RamWorks size [1..127]
-		{
-			lpCmdLine = lpNextArg;
-			lpNextArg = GetNextArg(lpCmdLine);
-			g_uMaxExPages = atoi(lpCmdLine);
-			if (g_uMaxExPages > 127)
-				g_uMaxExPages = 128;
-			else if (g_uMaxExPages < 1)
-				g_uMaxExPages = 1;
-		}
-#endif
-
-		lpCmdLine = lpNextArg;
-	}
-*/
-
+  cli_t cli;
+  parseCommandLine(argc, argv, &cli);
+  if (cli.boot)
+    autoboot = true;
+  if (cli.fullscreen)
+    fullscreenboot = true;
+  if (cli.imagefile1) {
+    Disk1 = cli.imagefile1;
+    argdisks = true;
+  }
+  if (cli.imagefile2) {
+    Disk2 = cli.imagefile2;
+    argdisks2 = true;
+  }
 
 // What is it???? RIFF support for sound saving during emulation in RIFF format.
 	// Currently not used?
@@ -1144,6 +982,5 @@ int main(int argc, char * lpCmdLine[])
 	curl_easy_cleanup(g_curl);
 	curl_global_cleanup();
 //
-	printf("Linapple: successfully exited!\n");
 	return 0;
 }
