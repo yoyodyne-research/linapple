@@ -32,15 +32,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  * Linappple-pie was adapted in OCT 2015 for use with Retropie by Mark Ormond. 
  */
 
-#include "stdafx.h"
-#include <time.h>
-#include <sys/time.h>
-#include <curl/curl.h>
-#include <stdlib.h>
-#include <getopt.h>
-#include <strings.h>
 #include <fstream>
+#include <iostream>
+#include <curl/curl.h>
+#include <getopt.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <sys/time.h>
+#include <time.h>
 
+#include "stdafx.h"
 #include "MouseInterface.h"
 #include "cli.h"
 
@@ -723,23 +724,6 @@ int main(int argc, char *argv[])
 //		reading FullScreen and Boot from conf file?
 //	bool bSetFullScreen = false;
 //	bool bBoot = false;
-
-//     
-// Find Home Directory and assign linapple.conf to ~/.linapple/linapple.conf
-// if not found set default name in current directory    
-                  const char* home = getenv("HOME");
-                  std::string linappleconfstr(home);
-                  linappleconfstr += "/.linapple/linapple.conf";
-                  const char * linappleconf = linappleconfstr.c_str();
-                  ifstream ifile (linappleconf);
-                  if (ifile) { 
-                                registry = fopen(linappleconf , "a+t");	// open conf file (linapple.conf by default)
-                  }
-                                else  {
-	registry = fopen("linapple.conf" , "a+t");	// open conf file (linapple.conf by default)
-                                        }
-
-
                   
 //	spMono = fopen("speakersmono.pcm","wb");
 //	spStereo = fopen("speakersstereo.pcm","wb");
@@ -753,6 +737,28 @@ int main(int argc, char *argv[])
 
   cli_t cli;
   parseCommandLine(argc, argv, &cli);
+  if (cli.conffile) {
+    std::cerr << cli.conffile << std::endl;
+    registry = fopen(cli.conffile, "r");
+    if (!registry) {
+      std::cerr << "[error] could not open "
+	"configuration file '" << cli.conffile << "'." << std::endl;
+      return 255;
+    }
+  } else {
+    // Expect linapple.conf to be in $HOME/.linapple.
+    std::string conf;
+    conf.clear();
+    conf += getenv("HOME");
+    conf += "/.linapple/linapple.conf";
+    ifstream ifile(conf.c_str());
+    if (ifile) {
+      registry = fopen(conf.c_str(), "r");
+    } else {
+      // If not found there, expect it in the current directory.
+      registry = fopen("linapple.conf", "r");
+    }
+  }
   if (cli.boot)
     autoboot = true;
   if (cli.fullscreen)
@@ -765,7 +771,7 @@ int main(int argc, char *argv[])
     Disk2 = cli.imagefile2;
     argdisks2 = true;
   }
-
+  
 // What is it???? RIFF support for sound saving during emulation in RIFF format.
 	// Currently not used?
 #if 0
