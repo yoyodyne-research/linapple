@@ -34,7 +34,7 @@ $(EXE): Applewin
 	mv $^ $@
 	strip $@
 	@echo " o $(EXE) compiled succesfully"
-	cp $@ ../
+	cp $@ ../gala
 
 clean:
 	rm -f $(EXE) *.o
@@ -70,4 +70,4 @@ uninstall:
 	rm -rf "$(INSTDIR)"
 	@echo " o Removing startup script $(STARTUP)"
 	rm -f "$(STARTUP)"
-	@echo " o All done! Linapple has been successfully removed from your system"
+	@echo " o All done! gala has been successfully removed from your system"
