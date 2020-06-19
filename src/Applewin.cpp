@@ -1,18 +1,21 @@
 /*
-LinApple : An Apple //e emulator for Windows
+gala : An Apple //e emulator
 
+Adapted from LinApple:
+Copyright (C) 2015, Mark Ormond
+Copyright (C) 2012, Krez Beotiger
 Adapted from Applewin:
 Copyright (C) 1994-1996, Michael O'Brien
 Copyright (C) 1999-2001, Oliver Schmidt
 Copyright (C) 2002-2005, Tom Charlesworth
 Copyright (C) 2006-2007, Tom Charlesworth, Michael Pohoreski
 
-LinApple is free software; you can redistribute it and/or modify
+gala is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
-LinApple is distributed in the hope that it will be useful,
+gala is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -28,8 +31,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  * Author: various
  *
  * History:
- * Adaptation for SDL and POSIX (l) by beom beotiger, Nov-Dec 2007, krez beotiger March 2012 AD
- * Linappple-pie was adapted in OCT 2015 for use with Retropie by Mark Ormond. 
+ * Linapple-pie was adapted in OCT 2015 for use with Retropie by Mark Ormond. 
+ * AppleWin adaptation for SDL and POSIX (l) by beom beotiger, Nov-Dec 2007, krez beotiger March 2012 AD.
  */
 
 #include <fstream>
@@ -452,9 +455,9 @@ void LoadConfiguration ()
   LOAD(TEXT("JoyExitEnable"),&joyexitenable);
   LOAD(TEXT("JoyExitButton0"),&joyexitbutton0);
   LOAD(TEXT("JoyExitButton1"),&joyexitbutton1);
-  
-  if (joytype[0]==1 ) printf ("Joystick 1 Index # = %i, Name = %s \nButton 1 = %i, Button 2 = %i \nAxis 0 = %i,Axis 1 = %i\n",joy1index,SDL_JoystickName(joy1index),joy1button1, joy1button2,joy1axis0,joy1axis1);   
-  if (joytype[1]==1 )printf ("Joystick 2 Index # = %i, Name = %s \nButton 1 = %i \nAxis 0 = %i,Axis 1 = %i\n",joy2index,SDL_JoystickName(joy2index),joy2button1,joy2axis0,joy2axis1);
+ 
+  // if (joytype[0]==1 ) printf ("Joystick 1 Index # = %i, Name = %s \nButton 1 = %i, Button 2 = %i \nAxis 0 = %i,Axis 1 = %i\n",joy1index,SDL_JoystickName(joy1index),joy1button1, joy1button2,joy1axis0,joy1axis1);   
+  // if (joytype[1]==1 )printf ("Joystick 2 Index # = %i, Name = %s \nButton 1 = %i \nAxis 0 = %i,Axis 1 = %i\n",joy2index,SDL_JoystickName(joy2index),joy2button1,joy2axis0,joy2axis1);
   
   LOAD(TEXT("Sound Emulation")   ,&soundtype);
 
@@ -705,8 +708,6 @@ void LoadConfiguration ()
 	  free(szFilename);
 	  szFilename = NULL;
   }
-// Print some debug strings
-  printf("Ready login = %s\n",g_sFTPUserPass);
 
 //
 // ****By now we deal without Uthernet interface! --bb****
@@ -736,7 +737,9 @@ int main(int argc, char *argv[])
 //		!strcmp(lpCmdLine[1],"-b"));	// if we should start benchmark (-b in command line string)
 
   cli_t cli;
-  parseCommandLine(argc, argv, &cli);
+  int error = parseCommandLine(argc, argv, &cli);
+  if (error == ERROR_USAGE)
+    return 0;
   if (cli.conffile) {
     std::cerr << cli.conffile << std::endl;
     registry = fopen(cli.conffile, "r");

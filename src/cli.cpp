@@ -32,8 +32,8 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
   cli->imagefile2 = NULL;
   cli->statefile = NULL;
 
-  int opt;
-  int longindex;
+  int opt = -1;
+  int longindex = argc;
   const char *optname;
   static struct option longopts[] = {{"boot", 0, 0, 0},
                                      {"conf", required_argument, 0, 0},
@@ -61,7 +61,7 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
 
     case 'h':
       printHelp();
-      return ERROR_NONE;
+      return ERROR_USAGE;
 
     case 'l':
       cli->enablelogging = "true";
@@ -69,7 +69,6 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
 
     default:
       optname = longopts[longindex].name;
-      printf("%d %d %s\n", optind, longindex, optname);
 
       if (!strcmp(optname, "boot")) {
         cli->boot = "true";
@@ -91,7 +90,7 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
 
       } else if (!strcmp(optname, "help")) {
         printHelp();
-        return ERROR_NONE;
+        return ERROR_USAGE;
 
       } else if (!strcmp(optname, "state")) {
         cli->statefile = optarg;
