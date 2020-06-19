@@ -28,6 +28,10 @@ It may also work on other flavours of Linux.
   zlib1g-dev
   libzip-dev
 
+To build:
+
+  make
+
 
 ## Lineage
 
