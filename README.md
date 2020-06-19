@@ -19,10 +19,14 @@ the ][, ][+, //e and //e enhanced.
 
 ## Build Requirements
 
-*gala* runs on Debian/Ubuntu and Raspbian.
-It could work on other Linux flavours.
+*gala* builds and runs on Debian/Ubuntu and Raspbian.
+It may also work on other flavours of Linux.
 
-Requires development libraries for SDL 1.2.
+  libsdl1.2-dev
+  libsdl-image1.2-dev
+  libcurl4-openssl-dev
+  zlib1g-dev
+  libzip-dev
 
 
 ## Lineage
@@ -42,7 +46,7 @@ Requires development libraries for SDL 1.2.
   * mounting and running disks from the command line
   * joystick remapping
 
-### Gala
+### gala
 
 2019-2020: Additional work on top to add more user-facing controls,
 restore certain functionality, and improve RetroPie integration.
