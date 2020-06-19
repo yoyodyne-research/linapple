@@ -63,14 +63,12 @@ void SysClk_TickTimer(int signum)
 }
 
 bool SysClk_InitTimer()
-{// first initialization of the timer
+{
 /*	memset(&sa_SysClk, 0, sizeof(sa_SysClk));	// clear sigaction struct
 	sa_SysClk.sa_handler = &SysClk_TickTimer;
 	sigaction(SIGALRM, &sa_SysClk, NULL);	// set SIGALRM handler*/
 	if(signal(SIGALRM, SysClk_TickTimer) == SIG_ERR)
 		return false;
-
-	printf("Timer has been initted!\n");
  	return true;
 }
 

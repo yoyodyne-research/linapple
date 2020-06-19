@@ -537,7 +537,7 @@ int DiskInsert (int drive, LPCTSTR imagefilename, BOOL writeprotected, BOOL crea
     tmp = GetImageTitle(imagefilename, fptr);	// get image title
     snprintf(s_title, MAX_DISK_IMAGE_NAME + 32, "%s - %s", g_pAppTitle, tmp); //
     if(drive == 0) SDL_WM_SetCaption(s_title, g_pAppTitle);// change caption just for drive 0 (leading)
-    printf("Disk is inserted. Full name = %s\n", /*g_aFloppyDisk[drive].fullname*/imagefilename);
+    //printf("Disk is inserted. Full name = %s\n", /*g_aFloppyDisk[drive].fullname*/imagefilename);
   }
   return error;
 }

@@ -1171,7 +1171,7 @@ int FrameCreateWindow ()
 	}//if
 // define if we have resized window
 	g_WindowResized = (g_ScreenWidth != SCREEN_WIDTH) | (g_ScreenHeight != SCREEN_HEIGHT);
-	printf("Screen size is %dx%d\n",g_ScreenWidth, g_ScreenHeight);
+	//printf("Screen size is %dx%d\n",g_ScreenWidth, g_ScreenHeight);
 	if(g_WindowResized) {
 	// create rects for screen stretching
 		origRect.x = origRect.y = newRect.x = newRect.y = 0;

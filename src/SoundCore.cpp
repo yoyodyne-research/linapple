@@ -147,10 +147,10 @@ bool SDLSoundDriverInit(unsigned wantedFreq, unsigned wantedSamples)
 	mockBuffer = new short[bufferSize];	// buffer for Mockingboard
 
 	reInit();
-	printf("SDL_MIX_MAXVOLUME=%d\n",SDL_MIX_MAXVOLUME);
-	printf("Freq=%d,format=%d,channels=%d,silence=%d\n",
-				audioSpec.freq,audioSpec.format,audioSpec.channels,audioSpec.silence);
-	printf("samples=%d,size=%d,bufferSize=%d\n",audioSpec.samples,audioSpec.size,bufferSize);
+	//printf("SDL_MIX_MAXVOLUME=%d\n",SDL_MIX_MAXVOLUME);
+	//printf("Freq=%d,format=%d,channels=%d,silence=%d\n",
+//				audioSpec.freq,audioSpec.format,audioSpec.channels,audioSpec.silence);
+//printf("samples=%d,size=%d,bufferSize=%d\n",audioSpec.samples,audioSpec.size,bufferSize);
 	
 //	SDL_PauseAudio(0);
 	return true;
