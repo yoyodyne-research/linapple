@@ -2,6 +2,7 @@
 #pragma once
 
 typedef struct {
+    char *executable;
     char *enablelogging;
     char *fullscreen;
     char *boot;

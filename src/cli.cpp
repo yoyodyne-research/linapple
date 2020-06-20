@@ -2,26 +2,35 @@
 #include <cstring>
 #include <getopt.h>
 #include <stdio.h>
+#include <iostream>
 
 #include "cli.h"
 
 void printHelp() {
-    printf("usage: gala [options]\n"
+    printf("usage: gala [options] FILE [FILE]\n"
            "\n"
-           "Gala is an emulator of the Apple ][, Apple ][+, Apple //e,\n"
-           "and Enhanced Apple //e family of computers.\n"
+           "Gala emulates the Apple ][, ][+, //e,\n"
+           "and enhanced //e family of computers.\n"
            "\n"
+	   "FILE can be\n"
+	   "  a 140k floppy disk image,\n"
+	   "  a hard disk image,\n"
+	   "  a savestate file,\n"
+	   "  or a configuration file.\n"
+	   "\n"
+	   "options:\n"
            "  -h|--help          show this help message\n"
-           "  --drive1 FILE      insert disk image FILE into first drive\n"
-           "  --drive2 FILE      insert disk image FILE into second drive\n"
+           "  --drive1 FILE      insert disk image FILE into drive 1\n"
+           "  --drive2 FILE      insert disk image FILE into drive 2\n"
            "  -b|--boot          boot/reset at startup\n"
            "  -f|--fullscreen    start fullscreen\n"
-           "  --log              write log to 'AppleWin.log'\n"
+           "  --log              write log to 'gala.log'\n"
            "  --benchmark        benchmark and quit\n"
            "\n");
 }
 
 int parseCommandLine(int argc, char *argv[], cli_t *cli) {
+    cli->executable = argv[0];
     cli->enablelogging = NULL;
     cli->fullscreen = NULL;
     cli->boot = NULL;
@@ -100,7 +109,7 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
 
     // The remainder are arguments proper.
     int floppycount = 0;
-    for (int index = longindex; index < argc; index++) {
+    for (int index = optind; index < argc; index++) {
         char *value = argv[index];
         if (strlen(value) > 4 && !strcmp(value + strlen(value) - 4, ".dsk")) {
             if (floppycount)
