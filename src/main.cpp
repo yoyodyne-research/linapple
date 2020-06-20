@@ -69,46 +69,35 @@ TCHAR *g_pAppTitle = TITLE_APPLE_2E_ENHANCED;
 eApple2Type g_Apple2Type = A2TYPE_APPLE2EEHANCED;
 
 int opt;
-bool fullscreenboot = false;
 bool disablecursor = false;
 BOOL behind = 0;	    // Redundant
 DWORD cumulativecycles = 0; // Wraps after ~1hr 9mins
-DWORD cyclenum = 0;	 // Used by SpkrToggle() for non-wave sound
+DWORD cyclenum = 0;	    // Used by SpkrToggle() for non-wave sound
 DWORD emulmsec = 0;
 static DWORD emulmsec_frac = 0;
 bool g_bFullSpeed = false;
 bool hddenabled = false;
 static bool g_uMouseInSlot4 = false;
 
-// Win32
-// HINSTANCE g_hInstance          = (HINSTANCE)0;
-
 AppMode_e g_nAppMode = MODE_LOGO;
 
-// Default screen sizes
-// SCREEN_WIDTH & SCREEN_HEIGHT defined in Frame.h
 UINT g_ScreenWidth = SCREEN_WIDTH;
 UINT g_ScreenHeight = SCREEN_HEIGHT;
 
-// static int lastmode         = MODE_LOGO;		-- not used???
 DWORD needsprecision = 0; // Redundant
 // TCHAR     g_sProgramDir[MAX_PATH] = TEXT("");
 TCHAR g_sCurrentDir[MAX_PATH] =
-	TEXT(""); // Also Starting Dir for Slot6 disk images?? --bb
+	TEXT("");
 TCHAR g_sHDDDir[MAX_PATH] =
-	TEXT(""); // starting dir for HDV (Apple][ HDD) images?? --bb
-TCHAR g_sSaveStateDir[MAX_PATH] = TEXT(""); // starting dir for states --bb
+	TEXT("");
+TCHAR g_sSaveStateDir[MAX_PATH] = TEXT("");
 TCHAR g_sParallelPrinterFile[MAX_PATH] =
-	TEXT("Printer.txt"); // default file name for Parallel printer
+	TEXT("Printer.txt");
 
-// FTP Variables
 TCHAR g_sFTPLocalDir[MAX_PATH] =
 	TEXT(""); // FTP Local Dir, see linapple.conf for details
 TCHAR g_sFTPServer[MAX_PATH] = TEXT("");    // full path to default FTP server
 TCHAR g_sFTPServerHDD[MAX_PATH] = TEXT(""); // full path to default FTP server
-
-// TCHAR     g_sFTPUser[256] = TEXT("anonymous"); // user name
-// TCHAR     g_sFTPPass[256] = TEXT("mymail@hotmail.com"); // password
 TCHAR g_sFTPUserPass[512] = TEXT(FTP_ANONYMOUS_LOGIN); // full login line
 
 bool g_bResetTiming = false; // Redundant
@@ -408,10 +397,10 @@ void LoadConfiguration(const cli_t &cli) {
 	LOAD(TEXT("Video Emulation"), &videotype);
 
 	LOAD(TEXT("Fullscreen"), &dwTmp); // load fullscreen flag
-	fullscreen = (BOOL)dwTmp;
-	if (!strcmp(cli.fullscreen, "true"))
+	if (cli.fullscreen && !strcmp(cli.fullscreen, "true"))
 		fullscreen = true;
-	else if (dwTmp)
+	else
+		fullscreen = (BOOL)dwTmp;
 
 		LOAD(TEXT("DisableCursor"), &dwTmp); // load Disable Cursor Flag
 	disablecursor = (BOOL)dwTmp;
@@ -684,17 +673,17 @@ int main(int argc, char *argv[]) {
 	DiskInitialize();
 	CreateColorMixMap(); // For tv emulation g_nAppMode
 
+	fullscreen = false;  // Frame.cpp
+	
 	do {
 		restart = 0;
 		g_nAppMode = MODE_LOGO;
-		fullscreen = false;
 		LoadConfiguration(cli);
 		FrameCreateWindow();
 		if (!DSInit())
 			soundtype = SOUND_NONE; // Direct Sound and Stuff
 		MB_Initialize();		// Mocking board
-		SpkrInitialize(); // Speakers - of Apple][ ...grrrrrrrrrrr, I
-				  // love them!--bb
+		SpkrInitialize();
 		DebugInitialize();
 		JoyInitialize();
 		MemInitialize();
@@ -711,12 +700,12 @@ int main(int argc, char *argv[]) {
 		else
 			SetFullScreenMode();
 
-		DrawFrameWindow(); // we do not have WM_PAINT?
+		DrawFrameWindow();
 
 		if (cli.benchmark)
-			VideoBenchmark(); // start VideoBenchmark and exit
+			VideoBenchmark();
 		else
-			EnterMessageLoop(); // else we just start game
+			EnterMessageLoop();
 
 		Snapshot_Shutdown();
 		DebugDestroy();
