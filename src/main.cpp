@@ -623,15 +623,10 @@ int openRegistry(const cli_t &cli) {
 
 	registry = NULL;
 	std::string conf;
+
 	if (cli.conffile) {
 		conf = cli.conffile;
 		registry = fopen(conf.c_str(), "r");
-		if (!registry) {
-			std::cerr << "[error] could not open "
-				     "configuration file '"
-				  << conf << "'." << std::endl;
-			return 255;
-		}
 	} else {
 		// Current directory.
 		conf = CONFIG_FILE;
@@ -642,17 +637,18 @@ int openRegistry(const cli_t &cli) {
 			       USER_CONFIG_DIR + "/" + CONFIG_FILE;
 			registry = fopen(conf.c_str(), "r");
 		}
-		// This thing needs a registry file no matter what...
+		// Oi, this thing needs a registry file no matter what...
 		if (!registry) {
 			conf = "/tmp/gala.conf";
 			registry = fopen(conf.c_str(), "w");
 		}
 	}
+
 	if (!registry) {
 		std::cerr << "[error] count not find or create a "
 			     "configuration"
 			  << std::endl;
-		return 1;
+		return 255;
 	}
 	std::cerr << "[info ] configuration: " << conf << std::endl;
 	return 0;
@@ -669,7 +665,7 @@ int initialize() {
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 	g_curl = curl_easy_init();
 	if (!g_curl) {
-		printf("Could not initialize CURL easy interface");
+		printf("[error] Could not initialize CURL easy interface");
 		return 128;
 	}
 	curl_easy_setopt(g_curl, CURLOPT_USERPWD, g_sFTPUserPass);
@@ -769,7 +765,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	error = openRegistry(cli);
-	std::cerr << registry << std::endl;
 	if (error)
 		return error;
 
@@ -778,7 +773,6 @@ int main(int argc, char *argv[]) {
 		return error;
 
 	do {
-		std::cerr << registry << std::endl;
 		start(cli);
 
 		if (cli.benchmark)

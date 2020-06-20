@@ -1,5 +1,5 @@
 
-.PHONY: default clean install
+.PHONY: default clean format install
 
 default:
 	$(MAKE) -C src
