@@ -33,19 +33,17 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
     cli->executable = argv[0];
     cli->enablelogging = NULL;
     cli->fullscreen = NULL;
-    cli->boot = NULL;
     cli->benchmark = NULL;
     cli->conffile = NULL;
     cli->hardfile = NULL;
-    cli->imagefile1 = NULL;
+    cli->imagefile = NULL;
     cli->imagefile2 = NULL;
     cli->statefile = NULL;
 
     int opt = -1;
     int longindex = argc;
     const char *optname;
-    static struct option longopts[] = {{"boot", 0, 0, 0},
-                                       {"conf", required_argument, 0, 0},
+    static struct option longopts[] = {
                                        {"drive1", required_argument, 0, 0},
                                        {"drive2", required_argument, 0, 0},
                                        {"fullscreen", required_argument, 0, 0},
@@ -57,7 +55,7 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
                               &longindex)) != -1) {
         switch (opt) {
         case '1':
-            cli->imagefile1 = optarg;
+            cli->imagefile = optarg;
             break;
 
         case '2':
@@ -79,17 +77,11 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
         default:
             optname = longopts[longindex].name;
 
-            if (!strcmp(optname, "boot")) {
-                cli->boot = "true";
-
-            } else if (!strcmp(optname, "benchmark")) {
+            if (!strcmp(optname, "benchmark")) {
                 cli->benchmark = "true";
 
-            } else if (!strcmp(optname, "conf")) {
-                cli->conffile = optarg;
-
             } else if (!strcmp(optname, "drive1")) {
-                cli->imagefile1 = optarg;
+                cli->imagefile = optarg;
 
             } else if (!strcmp(optname, "drive2")) {
                 cli->imagefile2 = optarg;
@@ -115,7 +107,7 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
             if (floppycount)
                 cli->imagefile2 = value;
             else
-                cli->imagefile1 = value;
+                cli->imagefile = value;
             floppycount++;
         } else if (strlen(value) > 5 &&
                    !strcmp(value + strlen(value) - 5, ".conf"))

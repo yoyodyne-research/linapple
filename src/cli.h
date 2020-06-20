@@ -5,11 +5,10 @@ typedef struct {
     char *executable;
     char *enablelogging;
     char *fullscreen;
-    char *boot;
     char *benchmark;
     char *conffile;
     char *hardfile;
-    char *imagefile1;
+    char *imagefile;
     char *imagefile2;
     char *statefile;
 } cli_t;

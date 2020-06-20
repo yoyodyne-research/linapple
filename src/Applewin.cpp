@@ -61,7 +61,6 @@ TCHAR *g_pAppTitle = TITLE_APPLE_2E_ENHANCED;
 eApple2Type	g_Apple2Type	= A2TYPE_APPLE2EEHANCED;
 
 int          opt;
-bool autoboot = false;
 bool fullscreenboot = false;
 bool disablecursor = false;
 BOOL      behind            = 0;			// Redundant
@@ -122,18 +121,6 @@ CMouseInterface		sg_Mouse;
 UINT	g_Slot4 = CT_Mockingboard;	// CT_Mockingboard or CT_MouseInterface
 
 CURL *g_curl = NULL;	// global easy curl resourse
-//===========================================================================
-
-// ???? what is DBG_CALC_FREQ???  O_O   --bb
-#define DBG_CALC_FREQ 0
-#if DBG_CALC_FREQ
-const UINT MAX_CNT = 256;
-double g_fDbg[MAX_CNT];
-UINT g_nIdx = 0;
-double g_fMeanPeriod,g_fMeanFreq;
-ULONG g_nPerfFreq = 0;
-#endif
-
 
 void free_null(char *sz) {
     if (sz) { free(sz); sz = NULL; }
@@ -252,28 +239,8 @@ void ContinueExecution()
 	if(!g_bFullSpeed)
 	{
 		SysClk_WaitTimer();
-
-#if DBG_CALC_FREQ
-		if(g_nPerfFreq)
-		{
-			//QueryPerformanceCounter((LARGE_INTEGER*)&nTime1); QueryPerformanceFrequency
-			LONG nTime1 = GetTickCount();//no QueryPerformanceCounter and alike
-			LONG nTimeDiff = nTime1 - nTime0;
-			double fTime = (double)nTimeDiff / (double)(LONG)g_nPerfFreq;
-
-			g_fDbg[g_nIdx] = fTime;
-			g_nIdx = (g_nIdx+1) & (MAX_CNT-1);
-			g_fMeanPeriod = 0.0;
-			for(UINT n=0; n<MAX_CNT; n++)
-				g_fMeanPeriod += g_fDbg[n];
-			g_fMeanPeriod /= (double)MAX_CNT;
-			g_fMeanFreq = 1.0 / g_fMeanPeriod;
-		}
-#endif
 	}
 }
-
-//===========================================================================
 
 void SetCurrentCLK6502()
 {
@@ -305,7 +272,6 @@ void SetCurrentCLK6502()
 	MB_Reinitialize();
 }
 
-//===========================================================================
 void EnterMessageLoop ()
 {
 	SDL_Event event;
@@ -452,25 +418,13 @@ void LoadConfiguration (const cli_t &cli)
 	  sz = NULL;
   }
 
-  // Boot
-
-  dwTmp = 0;
-  LOAD(TEXT("Boot at Startup") ,&dwTmp);
-  if (cli.boot || dwTmp)
-  {
-	  SDL_Event user_ev;
-	  user_ev.type = SDL_USEREVENT;
-	  user_ev.user.code = SDL_USEREVENT_RESTART;
-	  SDL_PushEvent(&user_ev);
-  }
-
-  // Floppy drive images
+  // Floppy drive image
   
   dwTmp = 0;
   LOAD(TEXT("Slot 6 Autoload") ,&dwTmp);
-  if (cli.imagefile1) {
-    std::cerr << "[info ] Drive 1: " << cli.imagefile1 << std::endl;
-    DiskInsert(0, cli.imagefile1, 0, 0);
+  if (cli.imagefile) {
+    DiskInsert(0, cli.imagefile, 0, 0);
+    std::cerr << "[info ] Drive 1: " << cli.imagefile << std::endl;
 
   } else if (dwTmp) {
       if(RegLoadString(TEXT("Configuration"), TEXT(REGVALUE_DISK_IMAGE1), 1, &sz, MAX_PATH))
@@ -496,46 +450,44 @@ void LoadConfiguration (const cli_t &cli)
 	if (!stat(path.c_str(), &statbuf)) {
 	  found = true;	
 	  DiskInsert(0, path.c_str(), 0, 0);
+	  std::cerr << "[info ] Drive 1: " << path << std::endl;
 	  break;
 	}
       }
 
-      if (found)
-	  std::cerr << "[info ] Drive 1: " << path << std::endl;
-      else
-	  std::cerr << "[warn ] Startup disk not found." << std::endl;
+      if (!found)
+	  std::cerr << "[warn ] Startup disk not found" << std::endl;
   }
     
   if (cli.imagefile2) {
-      std::cerr << "[info ] Drive 2: " << cli.imagefile2 << std::endl;
       DiskInsert(1, cli.imagefile2, 0, 0);
+      std::cerr << "[info ] Drive 2: " << cli.imagefile2 << std::endl;
   } else {
     if(RegLoadString(TEXT("Configuration"), TEXT(REGVALUE_DISK_IMAGE2), 1, &sz, MAX_PATH))
     {
       DiskInsert(1, sz, 0, 0);
+      std::cerr << "[info ] Drive 2: " << sz << std::endl;
       free_null(sz);
     }
   }
 
   // Hard drive image
   
-  // Load hard disk images and insert it automatically in slot 7
   if(RegLoadString(TEXT("Configuration"), TEXT(REGVALUE_HDD_IMAGE1), 1, &sz, MAX_PATH))
   {
-//	  printf("LoadConfiguration: returned string is: %s\n", sz);
 	  HD_InsertDisk2(0, sz);
 	  free(sz);
 	  sz = NULL;
   }
   if(RegLoadString(TEXT("Configuration"), TEXT(REGVALUE_HDD_IMAGE2), 1, &sz, MAX_PATH))
   {
-//	  printf("LoadConfiguration: returned string is: %s\n", sz);
 	  HD_InsertDisk2(1, sz);
 	  free(sz);
 	  sz = NULL;
   }
 
-// file name for Parallel Printer
+  // Printer
+
   if(RegLoadString(TEXT("Configuration"), TEXT(REGVALUE_PPRINTER_FILENAME), 1, &sz, MAX_PATH))
   {
 	  if(strlen(sz) > 1) strncpy(g_sParallelPrinterFile, sz, MAX_PATH);
@@ -620,6 +572,18 @@ void LoadConfiguration (const cli_t &cli)
 	  free(sz);
 	  sz = NULL;
   }
+
+  // Boot
+
+  dwTmp = 0;
+  LOAD(TEXT("Boot at Startup") ,&dwTmp);
+  if (!dwTmp)
+  {
+	  SDL_Event user_ev;
+	  user_ev.type = SDL_USEREVENT;
+	  user_ev.user.code = SDL_USEREVENT_RESTART;
+	  SDL_PushEvent(&user_ev);
+  }
 }
 
 
@@ -629,6 +593,8 @@ int main(int argc, char *argv[])
     int error = parseCommandLine(argc, argv, &cli);
     if (error == ERROR_USAGE)
 	return 0;
+
+    // Open configuration file.
     
     registry = NULL;
     if (cli.conffile) {
@@ -640,21 +606,24 @@ int main(int argc, char *argv[])
 	    return 255;
 	}
     } else {
-	// Expect linapple.conf to be in $HOME/.linapple.
 	std::string conf;
-	conf.clear();
-	conf += getenv("HOME");
-	conf += USER_CONFIG_DIR;
-	conf += "/";
-	conf += CONFIG_FILE;
-	registry = fopen(conf.c_str(), "r");
-	if (!registry)
-	    registry = fopen(CONFIG_FILE, "r");
+	conf = CONFIG_FILE;
+       	registry = fopen(conf.c_str(), "r");
+	if (!registry) {
+	    conf = std::string(getenv("HOME")) + "/" + USER_CONFIG_DIR + "/" + CONFIG_FILE;
+	    registry = fopen(conf.c_str(), "r");
+	}
 	// This thing needs a registry file no matter what...
-	if (!registry)
-	    registry = fopen("/tmp/gala.conf", "w");
+	if (!registry) {
+	    conf = "/tmp/gala.conf";
+	    registry = fopen(conf.c_str(), "w");
+	}
+	if(!registry)
+	    std::cerr << "[warn ] count not find or create a configuration" << std::endl;
+	else
+	    std::cerr << "[info ] configuration: " << conf << std::endl;
     }
-  
+    
 	if(InitSDL()) return 1; // init SDL subsystems, set icon
 
 	  curl_global_init(CURL_GLOBAL_DEFAULT);
