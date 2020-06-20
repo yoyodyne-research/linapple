@@ -178,6 +178,7 @@ BOOL RegLoadValue (LPCTSTR section, LPCTSTR key, BOOL peruser, DWORD *value) {
 
 void RegSaveKeyValue(char * NKey, char * NValue)
 {
+  return;
 	char MyStr[BUFSIZE];
 	char line[BUFSIZE];
 	char templine[BUFSIZE];

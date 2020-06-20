@@ -2,7 +2,7 @@ CXX ?= c++
 CXXFLAGS ?= -g -O3
 CXXFLAGS += -w
 
-OBJS := $(filter-out Applewin.cpp Util_MemoryTextFile.cpp,$(wildcard *.cpp))
+OBJS := $(wildcard *.cpp)
 OBJS := $(OBJS:.cpp=.o)
 
 SDL_CONFIG ?= sdl-config
@@ -15,20 +15,17 @@ CURL_LIBS = $(shell $(CURL_CONFIG) --libs)
 
 CXXFLAGS += $(SDL_CFLAGS)
 CXXFLAGS += $(CURL_CFLAGS)
-LDLIBS += $(SDL_LIBS) $(CURL_LIBS) -lSDL_image -lz -lzip
+LDFLAGS += $(SDL_LIBS) $(CURL_LIBS) -lSDL_image -lz -lzip
 
 PREFIX ?= /usr/local
 TARGET = gala
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install
 
 all: $(TARGET)
 
-Applewin: $(OBJS)
-
-$(TARGET): Applewin
-#	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
-	mv $^ $@
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 
 clean:
 	- rm $(TARGET) *.o
