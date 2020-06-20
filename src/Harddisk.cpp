@@ -34,9 +34,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "ftpparse.h"
 #include "DiskFTP.h"
 
-//#pragma  hdrstop
-//#include "resource.h"
-
 /*
 Memory map:
 

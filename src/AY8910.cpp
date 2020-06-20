@@ -32,17 +32,12 @@
 #include "wincompat.h"
 #include <stdio.h>
 #include <string.h>
-
 #include <SDL/SDL.h>
-//#include <unistd.h>
-//#include <stdlib.h>
 
-//#include <crtdbg.h>
 #include "AY8910.h"
-
 #include "Common.h"
 #include "Structs.h"
-#include "AppleWin.h"		// For g_fh
+#include "main.h"		// For g_fh
 #include "Mockingboard.h"	// For g_uTimer1IrqCount
 
 ///////////////////////////////////////////////////////////

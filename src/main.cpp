@@ -53,7 +53,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <time.h>
 #include "stdafx.h"
 
-#include "AppleWin.h"
+#include "main.h"
 #include "MouseInterface.h"
 #include "cli.h"
 
