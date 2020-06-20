@@ -1,7 +1,7 @@
 #pragma once
 
-// configuration file
-#define REGISTRY	"/opt/retropie/configs/apple2/linapple.conf"
+// The registry is synonymous with the configuration file eg 'gala.conf'.
+
 extern FILE * registry;	// our opened file
 
 BOOL    RegLoadString (LPCTSTR,LPCTSTR,BOOL,char**,DWORD);
@@ -13,4 +13,3 @@ void    RegSaveValue (LPCTSTR,LPCTSTR,BOOL,DWORD);
 void    RegSaveBool (LPCTSTR,LPCTSTR,BOOL,BOOL);
 
 char	*php_trim(char *c, int len);	// trimming string like PHP function trim does!
-

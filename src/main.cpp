@@ -1,14 +1,14 @@
 /*
 Gala : An Apple //e (et al) emulator
 
-Adapted from LinApple:
-Copyright (C) 2015, Mark Ormond
-Copyright (C) 2012, Krez Beotiger
 Adapted from Applewin:
 Copyright (C) 1994-1996, Michael O'Brien
 Copyright (C) 1999-2001, Oliver Schmidt
 Copyright (C) 2002-2005, Tom Charlesworth
 Copyright (C) 2006-2007, Tom Charlesworth, Michael Pohoreski
+Adapted from LinApple:
+Copyright (C) 2015, Mark Ormond
+Copyright (C) 2007-2012, Krez Beotiger
 
 Gala is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,16 +32,17 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  * Author: Various
  *
  * History:
- * 2019: Significant rework of OS-facing internals and changes to UX.
+ * 2020: Significant rework of OS-facing internals and changes to UX.
  *       Geared towards future use on Raspberry Pi & RetroPie.
  *       Core still old AppleWin. "Gala".
- * 2018: Improvements ported over from the GitHub Linapple team.
+ * 2013-2020: Improvements ported over from the GitHub Linapple team.
  * 2015: LinApple was adapted in OCT 2015, as "linapple-pie",
  *       for use with Retropie, by Mark Ormond.
- * 2012: "LinApple", an AppleWin adaptation for SDL and POSIX (l)
+ * 2007-2012: "LinApple", an AppleWin adaptation for SDL and POSIX (l)
  *       by beom beotiger, Nov-Dec 2007, krez beotiger March 2012 AD.
  */
 
+#include "stdafx.h"
 #include <curl/curl.h>
 #include <fstream>
 #include <getopt.h>
@@ -51,11 +52,10 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
-#include "stdafx.h"
 
-#include "main.h"
 #include "MouseInterface.h"
 #include "cli.h"
+#include "main.h"
 
 #define CONFIG_FILE "gala.conf"
 #define STARTUP_DSK "startup.dsk"
@@ -72,7 +72,7 @@ int opt;
 bool disablecursor = false;
 BOOL behind = 0;	    // Redundant
 DWORD cumulativecycles = 0; // Wraps after ~1hr 9mins
-DWORD cyclenum = 0;	    // Used by SpkrToggle() for non-wave sound
+DWORD cyclenum = 0;	 // Used by SpkrToggle() for non-wave sound
 DWORD emulmsec = 0;
 static DWORD emulmsec_frac = 0;
 bool g_bFullSpeed = false;
@@ -86,13 +86,10 @@ UINT g_ScreenHeight = SCREEN_HEIGHT;
 
 DWORD needsprecision = 0; // Redundant
 // TCHAR     g_sProgramDir[MAX_PATH] = TEXT("");
-TCHAR g_sCurrentDir[MAX_PATH] =
-	TEXT("");
-TCHAR g_sHDDDir[MAX_PATH] =
-	TEXT("");
+TCHAR g_sCurrentDir[MAX_PATH] = TEXT("");
+TCHAR g_sHDDDir[MAX_PATH] = TEXT("");
 TCHAR g_sSaveStateDir[MAX_PATH] = TEXT("");
-TCHAR g_sParallelPrinterFile[MAX_PATH] =
-	TEXT("Printer.txt");
+TCHAR g_sParallelPrinterFile[MAX_PATH] = TEXT("Printer.txt");
 
 TCHAR g_sFTPLocalDir[MAX_PATH] =
 	TEXT(""); // FTP Local Dir, see linapple.conf for details
@@ -123,7 +120,8 @@ UINT g_Slot4 = CT_Mockingboard; // CT_Mockingboard or CT_MouseInterface
 
 CURL *g_curl = NULL; // global easy curl resourse
 
-void free_null(char *sz) {
+void free_and_clear(char *sz) {
+	// We hope that, after this call, you're in the free and clear.
 	if (sz) {
 		free(sz);
 		sz = NULL;
@@ -192,8 +190,9 @@ void ContinueExecution() {
 	// CLOCKTICK
 	VideoCheckPage(0);
 	BOOL screenupdated = VideoHasRefreshed();
-	BOOL systemidle = 0; //(KeybGetNumQueries() > (clockgran << 2));	//  &&
-			     //(!ranfinegrain);	// TO DO
+	BOOL systemidle =
+		0; //(KeybGetNumQueries() > (clockgran << 2));	//  &&
+		   //(!ranfinegrain);	// TO DO
 
 	if (screenupdated)
 		pageflipping = 3;
@@ -324,6 +323,8 @@ void LoadConfiguration(const cli_t &cli) {
 	DWORD dwTmp = 0; // temp var
 	char *home = getenv("HOME");
 
+	// Machine type
+
 	DWORD dwComputerType;
 	LOAD(TEXT("Computer Emulation"), &dwComputerType);
 	switch (dwComputerType) {
@@ -402,7 +403,7 @@ void LoadConfiguration(const cli_t &cli) {
 	else
 		fullscreen = (BOOL)dwTmp;
 
-		LOAD(TEXT("DisableCursor"), &dwTmp); // load Disable Cursor Flag
+	LOAD(TEXT("DisableCursor"), &dwTmp); // load Disable Cursor Flag
 	disablecursor = (BOOL)dwTmp;
 
 	dwTmp = 1;
@@ -448,7 +449,7 @@ void LoadConfiguration(const cli_t &cli) {
 				  MAX_PATH)) {
 			DiskInsert(0, sz, 0, 0);
 			std::cerr << "[info ] Drive 1: " << sz << std::endl;
-			free_null(sz);
+			free_and_clear(sz);
 		}
 
 	} else {
@@ -487,7 +488,7 @@ void LoadConfiguration(const cli_t &cli) {
 				  MAX_PATH)) {
 			DiskInsert(1, sz, 0, 0);
 			std::cerr << "[info ] Drive 2: " << sz << std::endl;
-			free_null(sz);
+			free_and_clear(sz);
 		}
 	}
 
@@ -548,7 +549,7 @@ void LoadConfiguration(const cli_t &cli) {
 		      MAX_PATH);
 	if (sz) {
 		strcpy(g_sCurrentDir, sz);
-		free_null(sz);
+		free_and_clear(sz);
 	}
 	if (!strlen(g_sCurrentDir))
 		strcpy(g_sCurrentDir, getenv("HOME"));
@@ -557,7 +558,7 @@ void LoadConfiguration(const cli_t &cli) {
 		      MAX_PATH);
 	if (sz) {
 		strcpy(g_sHDDDir, sz);
-		free_null(sz);
+		free_and_clear(sz);
 	}
 
 	if (strlen(g_sHDDDir) == 0) // something is wrong in dir name?
@@ -567,7 +568,7 @@ void LoadConfiguration(const cli_t &cli) {
 		      MAX_PATH);
 	if (sz) {
 		strcpy(g_sSaveStateDir, sz);
-		free_null(sz);
+		free_and_clear(sz);
 	} else
 		strcpy(g_sSaveStateDir, home);
 
@@ -603,7 +604,7 @@ void LoadConfiguration(const cli_t &cli) {
 		sz = NULL;
 	}
 
-	// Boot
+	// Boot?
 
 	dwTmp = 0;
 	LOAD(TEXT("Boot at Startup"), &dwTmp);
@@ -615,29 +616,28 @@ void LoadConfiguration(const cli_t &cli) {
 	}
 }
 
-int main(int argc, char *argv[]) {
-	cli_t cli;
-	int error = parseCommandLine(argc, argv, &cli);
-	if (error == ERROR_USAGE)
-		return 0;
-
-	// Open configuration file.
+int openRegistry(const cli_t &cli) {
+	// If the file was not provided on the command line,
+	// look for it in the search path and open it.
+	// sets extern :registry:.
 
 	registry = NULL;
+	std::string conf;
 	if (cli.conffile) {
-		std::cerr << cli.conffile << std::endl;
-		registry = fopen(cli.conffile, "r");
+		conf = cli.conffile;
+		registry = fopen(conf.c_str(), "r");
 		if (!registry) {
 			std::cerr << "[error] could not open "
 				     "configuration file '"
-				  << cli.conffile << "'." << std::endl;
+				  << conf << "'." << std::endl;
 			return 255;
 		}
 	} else {
-		std::string conf;
+		// Current directory.
 		conf = CONFIG_FILE;
 		registry = fopen(conf.c_str(), "r");
 		if (!registry) {
+			// User's config directory.
 			conf = std::string(getenv("HOME")) + "/" +
 			       USER_CONFIG_DIR + "/" + CONFIG_FILE;
 			registry = fopen(conf.c_str(), "r");
@@ -647,86 +647,100 @@ int main(int argc, char *argv[]) {
 			conf = "/tmp/gala.conf";
 			registry = fopen(conf.c_str(), "w");
 		}
-		if (!registry)
-			std::cerr << "[warn ] count not find or create a "
-				     "configuration"
-				  << std::endl;
-		else
-			std::cerr << "[info ] configuration: " << conf
-				  << std::endl;
 	}
+	if (!registry) {
+		std::cerr << "[error] count not find or create a "
+			     "configuration"
+			  << std::endl;
+		return 1;
+	}
+	std::cerr << "[info ] configuration: " << conf << std::endl;
+	return 0;
+}
 
-	if (InitSDL())
-		return 1; // init SDL subsystems, set icon
+int initialize() {
+	// Steps to take before first run.
+
+	int error;
+
+	if (error = InitSDL())
+		return error;
 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 	g_curl = curl_easy_init();
 	if (!g_curl) {
 		printf("Could not initialize CURL easy interface");
-		return 1;
+		return 128;
 	}
 	curl_easy_setopt(g_curl, CURLOPT_USERPWD, g_sFTPUserPass);
-	/*bool bSysClkOK =*/SysClk_InitTimer();
+
+	fullscreen = false; // Frame.cpp
+
+	SysClk_InitTimer();
 	MemPreInitialize(); // Call before any of the slot devices are
 			    // initialized
 	ImageInitialize();
 	DiskInitialize();
 	CreateColorMixMap(); // For tv emulation g_nAppMode
 
-	fullscreen = false;  // Frame.cpp
-	
-	do {
-		restart = 0;
-		g_nAppMode = MODE_LOGO;
-		LoadConfiguration(cli);
-		FrameCreateWindow();
-		if (!DSInit())
-			soundtype = SOUND_NONE; // Direct Sound and Stuff
-		MB_Initialize();		// Mocking board
-		SpkrInitialize();
-		DebugInitialize();
-		JoyInitialize();
-		MemInitialize();
-		HD_SetEnabled(hddenabled ? true : false);
-		VideoInitialize();
-		Snapshot_Startup(); // Do this after everything has been init'ed
-		JoyReset();
-		SetUsingCursor(0);
-		if (disablecursor)
-			SDL_ShowCursor(SDL_DISABLE);
+	return 0;
+}
 
-		if (!fullscreen)
-			SetNormalMode();
-		else
-			SetFullScreenMode();
+void start(cli_t &cli) {
+	// Steps to take before a machine run.
 
-		DrawFrameWindow();
+	restart = 0;
+	g_nAppMode = MODE_LOGO;
+	LoadConfiguration(cli);
+	FrameCreateWindow();
+	if (!DSInit())
+		soundtype = SOUND_NONE; // Direct Sound and Stuff
+	MB_Initialize();		// Mocking board
+	SpkrInitialize();
+	DebugInitialize();
+	JoyInitialize();
+	MemInitialize();
+	HD_SetEnabled(hddenabled ? true : false);
+	VideoInitialize();
+	Snapshot_Startup(); // Do this after everything has been init'ed
+	JoyReset();
+	SetUsingCursor(0);
+	if (disablecursor)
+		SDL_ShowCursor(SDL_DISABLE);
 
-		if (cli.benchmark)
-			VideoBenchmark();
-		else
-			EnterMessageLoop();
+	if (!fullscreen)
+		SetNormalMode();
+	else
+		SetFullScreenMode();
 
-		Snapshot_Shutdown();
-		DebugDestroy();
-		if (!restart) {
-			DiskDestroy();
-			ImageDestroy();
-			HD_Cleanup();
-		}
-		PrintDestroy();
-		sg_SSC.CommDestroy();
-		CpuDestroy();
-		MemDestroy();
-		SpkrDestroy();
-		VideoDestroy();
-		MB_Destroy();
-		MB_Reset();
-		sg_Mouse.Uninitialize(); // Maybe restarting due to switching
-					 // slot-4 card from mouse to MB
-		JoyShutDown();		 // close opened (if any) joysticks
-	} while (restart);
+	DrawFrameWindow();
+}
 
+void stop() {
+	// Steps to take after a machine run.
+
+	Snapshot_Shutdown();
+	DebugDestroy();
+	if (!restart) {
+		DiskDestroy();
+		ImageDestroy();
+		HD_Cleanup();
+	}
+	PrintDestroy();
+	sg_SSC.CommDestroy();
+	CpuDestroy();
+	MemDestroy();
+	SpkrDestroy();
+	VideoDestroy();
+	MB_Destroy();
+	MB_Reset();
+	sg_Mouse.Uninitialize(); // Maybe restarting due to switching
+				 // slot-4 card from mouse to MB
+	JoyShutDown();
+}
+
+void uninitialize() {
+	// Steps to take right before application exit.
 	DSUninit();
 	SysClk_UninitTimer();
 	if (g_fh) {
@@ -743,5 +757,39 @@ int main(int argc, char *argv[]) {
 	SDL_Quit();
 	curl_easy_cleanup(g_curl);
 	curl_global_cleanup();
+}
+
+int main(int argc, char *argv[]) {
+	cli_t cli;
+	int error = parseCommandLine(argc, argv, &cli);
+	if (error) {
+		if (error == ERROR_USAGE)
+			return 0;
+		return error;
+	}
+
+	error = openRegistry(cli);
+	std::cerr << registry << std::endl;
+	if (error)
+		return error;
+
+	error = initialize();
+	if (error)
+		return error;
+
+	do {
+		std::cerr << registry << std::endl;
+		start(cli);
+
+		if (cli.benchmark)
+			VideoBenchmark();
+		else
+			EnterMessageLoop();
+
+		stop();
+
+	} while (restart);
+
+	uninitialize();
 	return 0;
 }
