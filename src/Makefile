@@ -17,7 +17,6 @@ CXXFLAGS += $(SDL_CFLAGS)
 CXXFLAGS += $(CURL_CFLAGS)
 LDFLAGS += $(SDL_LIBS) $(CURL_LIBS) -lSDL_image -lz -lzip
 
-PREFIX ?= /usr/local
 TARGET = gala
 
 .PHONY: all clean install
@@ -31,6 +30,6 @@ clean:
 	- rm $(TARGET) *.o
 
 install: all
-	install --target-directory $(DESTDIR)/bin $(TARGET)
-	install --target-directory $(DESTDIR)/share/gala src/startup.dsk 
-	install --target-directory $(DESTDIR)/etc/gala src/gala.conf
+	install -D --target-directory $(DESTDIR)/bin $(TARGET)
+	install -D --target-directory $(DESTDIR)/share/gala ../startup.dsk 
+	install -D --target-directory $(DESTDIR)/etc/gala ../gala.conf
