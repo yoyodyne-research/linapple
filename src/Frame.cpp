@@ -24,30 +24,28 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 /* Description: Frame
  *
  * Author: Various
+ *
+ * History:
+ * Adaptation for SDL and POSIX (l) by beom beotiger, Nov-Dec 2007
  */
 
-/* Adaptation for SDL and POSIX (l) by beom beotiger, Nov-Dec 2007 */
-
-// for usleep
-#include <unistd.h>
 #include "stdafx.h"
-//#pragma  hdrstop
-#include "MouseInterface.h"
-//#include "..\resource\resource.h"
-
-// for stat in FrameSaveBMP function
+#include <SDL_image.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
+#include "MouseInterface.h"
+#include "icon.xpm"
 
 #define ENABLE_MENU 0
 
-SDL_Surface     *apple_icon;	// icon
+SDL_Surface     *apple_icon;
 
-SDL_Surface * screen;	// our main screen
+SDL_Surface * screen;
 // rects for screen stretch if needed
 SDL_Rect origRect;
 SDL_Rect newRect;
-///////////////////////////////////////////
+
 #define  VIEWPORTCX  560
 #if ENABLE_MENU
 #define  VIEWPORTCY  400
@@ -1204,7 +1202,7 @@ int InitSDL()
 	SDL_WM_SetIcon(apple_icon, NULL);
 	printf("Icon was set! Width=%d, height=%d\n", apple_icon->w, apple_icon->h);*/
 
-	apple_icon = SDL_LoadBMP("icon.bmp");
+	apple_icon = IMG_ReadXPMFromArray(icon_xpm);
 	if(apple_icon != NULL) {
 		Uint32 colorkey = SDL_MapRGB(apple_icon->format, 0, 0, 0);
 		SDL_SetColorKey(apple_icon, SDL_SRCCOLORKEY, colorkey);
