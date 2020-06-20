@@ -1,8 +1,8 @@
 
 #include <cstring>
 #include <getopt.h>
-#include <stdio.h>
 #include <iostream>
+#include <stdio.h>
 
 #include "cli.h"
 
@@ -12,13 +12,13 @@ void printHelp() {
            "Gala emulates the Apple ][, ][+, //e,\n"
            "and enhanced //e family of computers.\n"
            "\n"
-	   "FILE can be\n"
-	   "  a 140k floppy disk image,\n"
-	   "  a hard disk image,\n"
-	   "  a savestate file,\n"
-	   "  or a configuration file.\n"
-	   "\n"
-	   "options:\n"
+           "FILE can be\n"
+           "  a 140k floppy disk image,\n"
+           "  a hard disk image,\n"
+           "  a savestate file,\n"
+           "  or a configuration file.\n"
+           "\n"
+           "options:\n"
            "  -h|--help          show this help message\n"
            "  --drive1 FILE      insert disk image FILE into drive 1\n"
            "  --drive2 FILE      insert disk image FILE into drive 2\n"
@@ -43,8 +43,7 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
     int opt = -1;
     int longindex = argc;
     const char *optname;
-    static struct option longopts[] = {
-                                       {"drive1", required_argument, 0, 0},
+    static struct option longopts[] = {{"drive1", required_argument, 0, 0},
                                        {"drive2", required_argument, 0, 0},
                                        {"fullscreen", required_argument, 0, 0},
                                        {"help", 0, 0, 0},
