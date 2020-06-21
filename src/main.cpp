@@ -52,6 +52,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
+#include <guichan.hpp>
+#include <guichan/sdl.hpp>
+#include "SDL.h"
 
 #include "MouseInterface.h"
 #include "cli.h"
@@ -119,6 +122,12 @@ CMouseInterface sg_Mouse;
 UINT g_Slot4 = CT_Mockingboard; // CT_Mockingboard or CT_MouseInterface
 
 CURL *g_curl = NULL; // global easy curl resourse
+
+gcn::SDLGraphics* graphics;       // Graphics driver
+gcn::Gui* gui;            // A Gui object - binds it all together
+gcn::Container* top;      // A top container
+gcn::ImageFont* font;     // A font
+gcn::Label* label;        // And a label for the Hello World text
 
 void free_and_clear(char *sz) {
 	// We hope that, after this call, you're in the free and clear.
@@ -217,6 +226,7 @@ void ContinueExecution() {
 			if ((!anyupdates) && (!lastupdates[0]) &&
 			    (!lastupdates[1]) && VideoApparentlyDirty()) {
 				VideoCheckPage(1);
+				//gui->draw();
 				static DWORD lasttime = 0;
 				DWORD currtime = GetTickCount();
 				if ((!g_bFullSpeed) ||
@@ -654,13 +664,17 @@ int openRegistry(const cli_t &cli) {
 	return 0;
 }
 
-int initialize() {
+int initialize(const cli_t &cli) {
 	// Steps to take before first run.
 
 	int error;
 
 	if (error = InitSDL())
 		return error;
+	SDL_EnableUNICODE(1);
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+	LoadConfiguration(cli);
+	FrameCreateWindow();
 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 	g_curl = curl_easy_init();
@@ -687,8 +701,6 @@ void start(cli_t &cli) {
 
 	restart = 0;
 	g_nAppMode = MODE_LOGO;
-	LoadConfiguration(cli);
-	FrameCreateWindow();
 	if (!DSInit())
 		soundtype = SOUND_NONE; // Direct Sound and Stuff
 	MB_Initialize();		// Mocking board
@@ -755,6 +767,36 @@ void uninitialize() {
 	curl_global_cleanup();
 }
 
+void initchan() {
+	top = new gcn::Container();
+	top->setDimension(gcn::Rectangle(0, 0, g_ScreenWidth, g_ScreenHeight));
+
+	gui = new gcn::Gui();
+	gui->setGraphics(graphics);
+	gui->setTop(top);
+
+//	font = new gcn::ImageFont("fixedfont_big.bmp", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+//	gcn::Widget::setGlobalFont(font);
+
+//	label = new gcn::Label("Hello World");
+//	label->setPosition(280, 220);
+//	top->add(label);
+}
+
+void haltchan() {
+	delete label;
+	delete font;
+	delete top;
+	delete gui;
+
+	/*
+	 * Destroy Guichan SDL stuff
+	 */
+//	delete input;
+	delete graphics;
+//	delete imageLoader;
+}
+
 int main(int argc, char *argv[]) {
 	cli_t cli;
 	int error = parseCommandLine(argc, argv, &cli);
@@ -763,14 +805,15 @@ int main(int argc, char *argv[]) {
 			return 0;
 		return error;
 	}
-
+	
 	error = openRegistry(cli);
 	if (error)
 		return error;
 
-	error = initialize();
+	error = initialize(cli);
 	if (error)
 		return error;
+	// initchan();
 
 	do {
 		start(cli);
@@ -785,5 +828,7 @@ int main(int argc, char *argv[]) {
 	} while (restart);
 
 	uninitialize();
+	// haltchan();
+	
 	return 0;
 }

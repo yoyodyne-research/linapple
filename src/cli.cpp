@@ -44,9 +44,10 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
 	int longindex = argc;
 	const char *optname;
 	static struct option longopts[] = {
+		{"benchmark",0, 0, 0},
 		{"drive1", required_argument, 0, 0},
 		{"drive2", required_argument, 0, 0},
-		{"fullscreen", required_argument, 0, 0},
+		{"fullscreen", 0, 0, 0},
 		{"help", 0, 0, 0},
 		{"state", required_argument, 0, 0},
 		{0, 0, 0, 0}};
