@@ -112,7 +112,6 @@ bool ChooseAnImage(int sx,int sy, char *incoming_dir, int slot, char **filename,
 
 	int act_file;		// current file
 	int first_file;		// from which we output files
-	printf("Disckchoose! We are here: %s\n",incoming_dir);
 //	files.Delete();
 //	sizes.Delete();
 #ifndef _WIN32

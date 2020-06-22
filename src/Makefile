@@ -24,7 +24,7 @@ TARGET = gala
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
 	- rm $(TARGET) *.o
