@@ -12,4 +12,3 @@ format: src/cli.cpp src/cli.h src/main.h src/main.cpp
 
 install:
 	$(MAKE) -C src install
-
