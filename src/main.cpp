@@ -120,14 +120,6 @@ UINT g_Slot4 = CT_Mockingboard; // CT_Mockingboard or CT_MouseInterface
 
 CURL *g_curl = NULL; // global easy curl resourse
 
-void free_and_clear(char *sz) {
-	// We hope that, after this call, you're in the free and clear.
-	if (sz) {
-		free(sz);
-		sz = NULL;
-	}
-}
-
 void ContinueExecution() {
 	static BOOL pageflipping = 0; //?
 
@@ -318,7 +310,15 @@ void EnterMessageLoop() {
 	}
 }
 
-void LoadConfiguration(const cli_t &cli) {
+void free_and_clear(char *sz) {
+	// We hope that, after this call, you're in the free and clear.
+	if (sz) {
+		free(sz);
+		sz = NULL;
+	}
+}
+
+void LoadConfiguration(const cli::cli_t &cli) {
 	char *sz = NULL;
 	DWORD dwTmp = 0; // temp var
 	char *home = getenv("HOME");
@@ -616,7 +616,7 @@ void LoadConfiguration(const cli_t &cli) {
 	}
 }
 
-int openRegistry(const cli_t &cli) {
+int openRegistry(const cli::cli_t &cli) {
 	// If the file was not provided on the command line,
 	// look for it in the search path and open it.
 	// sets extern :registry:.
@@ -682,7 +682,7 @@ int initialize() {
 	return 0;
 }
 
-void start(cli_t &cli) {
+void start(cli::cli_t &cli) {
 	// Steps to take before a machine run.
 
 	restart = 0;
@@ -756,10 +756,10 @@ void uninitialize() {
 }
 
 int main(int argc, char *argv[]) {
-	cli_t cli;
+	cli::cli_t cli;
 	int error = parseCommandLine(argc, argv, &cli);
 	if (error) {
-		if (error == ERROR_USAGE)
+		if (error == cli::ERROR_USAGE)
 			return 0;
 		return error;
 	}

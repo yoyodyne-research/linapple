@@ -6,17 +6,18 @@
 
 #include "cli.h"
 
+namespace cli {
+
 void printHelp() {
 	printf("usage: gala [options] FILE [FILE]\n"
 	       "\n"
-	       "Gala emulates the Apple ][, ][+, //e,\n"
-	       "and enhanced //e family of computers.\n"
+	       "gala emulates the Apple //e personal computer.\n"
 	       "\n"
 	       "FILE can be\n"
 	       "  a 140k floppy disk image,\n"
 	       "  a hard disk image,\n"
-	       "  a savestate file,\n"
-	       "  or a configuration file.\n"
+	       "  an AppleWin savestate file,\n"
+	       "  or a gala configuration file.\n"
 	       "\n"
 	       "options:\n"
 	       "  -h|--help          show this help message\n"
@@ -124,4 +125,6 @@ int parseCommandLine(int argc, char *argv[], cli_t *cli) {
 	}
 
 	return ERROR_NONE;
+}
+
 }

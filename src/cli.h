@@ -1,6 +1,8 @@
 
 #pragma once
 
+namespace cli {
+
 typedef struct {
 	char *executable;
 	char *enablelogging;
@@ -22,3 +24,5 @@ enum cli_error_code {
 };
 
 int parseCommandLine(int argc, char *argv[], cli_t *cli);
+
+}
