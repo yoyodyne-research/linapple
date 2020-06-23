@@ -34,6 +34,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "draw.h"
+#include "font.h"
 #include "MouseInterface.h"
 #include "icon.xpm"
 
@@ -425,13 +427,13 @@ void DrawStatusArea (/*HDC passdc,*/ int drawflags)
 
 		leds[0] = LEDS + iDrive1Status;
 //		printf("Leds are %d\n",leds[0]);
-		font_print(8, 23, leds, g_hStatusSurface, 4, 2.7);
+		font_print(8, 23, leds, g_hStatusSurface);
 
 		leds[0] = LEDS + iDrive2Status;
-		font_print(40, 23, leds, g_hStatusSurface, 4, 2.7);
+		font_print(40, 23, leds, g_hStatusSurface);
 
 		leds[0] = LEDS + iHDDStatus;
-		font_print(71, 23, leds, g_hStatusSurface, 4, 2.7);
+		font_print(71, 23, leds, g_hStatusSurface);
 
 		if(iDrive1Status | iDrive2Status | iHDDStatus) g_iStatusCycle = SHOW_CYCLES; // show status panel
 	}
@@ -484,7 +486,7 @@ void FrameShowHelpScreen(int sx, int sy) // sx, sy - sizes of current window (sc
 {
 	// on pressing F1 button shows help screen
 
-   const char * HelpStrings[] = {
+	const char * HelpStrings[] = {
 	   "Welcome to LinApple - Apple][ emulator for Linux!",
     	   "Conf file is linapple.conf in ~/.linapple directory by default",
     	   "Hugest archive of Apple][ stuff you can find at ftp.apple.asimov.net",
@@ -510,23 +512,19 @@ void FrameShowHelpScreen(int sx, int sy) // sx, sy - sizes of current window (sc
 	   "  Grey + - Speed up emulator",
      	   "  Grey - - Speed it down",
 	   "  Grey * - Normal speed"
-   };
+	};
 
-//   const int PositionsY[] = { 7, 15, 26 };
+	SDL_Surface *my_screen;
+	SDL_Surface *tempSurface = NULL;
 
-   SDL_Surface *my_screen;	// for background
-   SDL_Surface *tempSurface = NULL;	// temporary surface
+	if(font_sfc == NULL)
+		!fonts_initialization();
 
-   if(font_sfc == NULL)
-	   if(!fonts_initialization()) {
-	   	fprintf(stderr, "Font file was not loaded.\n");
-	   	return;		//if we don't have a fonts, we just can do none
-	   }
 	if(!g_WindowResized) {
-	   if(g_nAppMode == MODE_LOGO) tempSurface = g_hLogoBitmap;	// use logobitmap
-	   else tempSurface = g_hDeviceBitmap;
-	 }
-	 else tempSurface = g_origscreen;
+		if(g_nAppMode == MODE_LOGO) tempSurface = g_hLogoBitmap;	// use logobitmap
+		else tempSurface = g_hDeviceBitmap;
+	}
+	else tempSurface = g_origscreen;
 
 	   if(tempSurface == NULL) tempSurface = screen;	// use screen, if none available
 	   my_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, tempSurface->w, tempSurface->h,
@@ -540,44 +538,24 @@ void FrameShowHelpScreen(int sx, int sy) // sx, sy - sizes of current window (sc
 
 	   SDL_BlitSurface(my_screen, NULL, screen, NULL);		// show background
 
-		double facx = double(g_ScreenWidth) / double(SCREEN_WIDTH);
-		double facy = double(g_ScreenHeight) / double(SCREEN_HEIGHT);
+	   double facx = double(g_ScreenWidth) / double(SCREEN_WIDTH);
+	   double facy = double(g_ScreenHeight) / double(SCREEN_HEIGHT);
 
-	   font_print_centered(sx/2, int(5*facy), (char*)HelpStrings[0], screen, 1.5*facx, 1.3*facy);
-	   font_print_centered(sx/2, int(20*facy), (char*)HelpStrings[1], screen, 1.3*facx, 1.2*facy);
-	   font_print_centered(sx/2, int(30*facy), (char*)HelpStrings[2], screen, 1.2*facx, 1.0*facy);
-
-   int Help_TopX = int(45*facy);
-   int i;
+	   float restore = font_set_scale(2.0);
+	   font_print_centered(sx/2, int(5*facy), (char*)HelpStrings[0], screen);
+	   font_print_centered(sx/2, int(20*facy), (char*)HelpStrings[1], screen);
+	   font_print_centered(sx/2, int(30*facy), (char*)HelpStrings[2], screen);
+	   font_set_scale(restore);
+	   
+	   int Help_TopX = int(45*facy);
+	   int i;
 	   for(i =  3; i < 25; i++)
-		   font_print(4, Help_TopX + (i - 3) * 15 * facy, (char*)HelpStrings[i], screen, 1.5*facx, 1.5*facy); // show keys
-
-	   // show frames
-	   rectangle(screen, 0, Help_TopX - 5, /*SCREEN_WIDTH*/g_ScreenWidth - 1, int(335*facy), SDL_MapRGB(screen->format, 255, 255, 255));
-	   rectangle(screen, 1, Help_TopX - 4, /*SCREEN_WIDTH*/g_ScreenWidth, int(335*facy), SDL_MapRGB(screen->format, 255, 255, 255));
-
-	   rectangle(screen, 1, 1, /*SCREEN_WIDTH*/g_ScreenWidth - 2, (Help_TopX - 8), SDL_MapRGB(screen->format, 255, 255, 0));
-
-	   if(apple_icon != NULL) {	// display Apple logo
-		   tempSurface = SDL_DisplayFormat(apple_icon);
-		   SDL_Rect logo, scrr;
-		   logo.x = logo.y = 0;
-		   logo.w = tempSurface->w;
-		   logo.h = tempSurface->h;
-		   scrr.x = int(460*facx);
-		   scrr.y = int(270*facy);
-		   scrr.w = scrr.h = int(100*facy);
-		   SDL_SoftStretchOr(tempSurface, &logo, screen, &scrr);
-	   }
+		   font_print(4, Help_TopX + (i - 3) * 15 * facy, (char*)HelpStrings[i], screen); // show keys
 
 	   SDL_Flip(screen);	// show the screen
 	   SDL_Delay(1000);	// wait 1 second to be not too fast
 
-	   //////////////////////////////////
-	   // Wait for keypress
-	   //////////////////////////////////
 	   SDL_Event event;	// event
-
 	   event.type = SDL_QUIT;
 	   while(event.type != SDL_KEYDOWN /*&& event.key.keysym.sym != SDLK_ESCAPE*/) {// wait for ESC-key pressed
 		   usleep(100);
@@ -1150,20 +1128,20 @@ void SetUsingCursor (BOOL newvalue) {
 //===========================================================================
 int FrameCreateWindow ()
 {
-	////************** Init SDL and create window screen
-// 	int xpos;
-// 	if (!RegLoadValue(TEXT("Preferences"),TEXT("Window X-Position"),1,(DWORD *)&xpos))
-// 		xpos = (GetSystemMetrics(SM_CXSCREEN)-width) >> 1;
-// 	int ypos;
-// 	if (!RegLoadValue(TEXT("Preferences"),TEXT("Window Y-Position"),1,(DWORD *)&ypos))
-// 		ypos = (GetSystemMetrics(SM_CYSCREEN)-height) >> 1;
-
 	SDL_putenv("SDL_VIDEO_CENTERED=center"); //center our window
 
 	bIamFullScreened = false; // at startup not in fullscreen mode
+#ifdef SDL2
+	*screen = SDL_CreateWindow("gala",
+				   SDL_WINDOWPOS_UNDEFINED,
+				   SDL_WINDOWPOS_UNDEFINED,
+				   g_ScreenWidth, g_ScreenHeight,
+				   SDL_WINDOW_OPENGL);
+#else
 	screen = SDL_SetVideoMode(g_ScreenWidth, g_ScreenHeight, SCREEN_BPP, SDL_SWSURFACE | SDL_HWPALETTE);
+#endif
 	if (screen == NULL) {
-		fprintf(stderr, "Could not set SDL video mode: %s\n", SDL_GetError());
+		fprintf(stderr, "[error] while creating window: %s\n", SDL_GetError());
 		SDL_Quit();
 		return 1;
 	}//if
@@ -1187,7 +1165,7 @@ int FrameCreateWindow ()
 
 int InitSDL()
 {
-		// initialize SDL subsystems, return 0 if all OK, else return 1
+	// initialize SDL subsystems, return 0 if all OK, else return 1
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0){
 		fprintf(stderr, "Could not initialize SDL: %s\n", SDL_GetError());
 		return 1;

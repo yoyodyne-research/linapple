@@ -24,6 +24,7 @@ NCSA Telnet FTP server. Has LIST = NLST (and bad NLST for directories).
 */
 #include "stdafx.h"
 
+#include <iostream>
 #include <time.h>
 #include <stdio.h>
 #include <curl/curl.h>
@@ -62,6 +63,8 @@ CURLcode ftp_get(const char *ftp_path, const char *local_path) {
     curl_easy_setopt(g_curl, CURLOPT_WRITEFUNCTION, my_fwrite);
     curl_easy_setopt(g_curl, CURLOPT_WRITEDATA, &ftpfile);
 	curl_easy_setopt(g_curl, CURLOPT_USERPWD, g_sFTPUserPass);
+
+	std::cerr << ftpfile.filename << " " << ftpfile.stream << " " << g_sFTPUserPass << std::endl;
 	
     /* Switch on full protocol/debug output */ 
 //    curl_easy_setopt(g_curl, CURLOPT_VERBOSE, 1L);

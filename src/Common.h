@@ -1,5 +1,7 @@
 #pragma once
 
+#include "wincompat.h"
+
 #define USE_SPEECH_API
 
 const double _M14 = (157500000.0 / 11.0);	// 14.3181818... * 10^6
@@ -154,3 +156,13 @@ enum eBUTTONSTATE { BUTTON_UP = 0, BUTTON_DOWN };
 // sizes of status panel
 #define STATUS_PANEL_W 100
 #define STATUS_PANEL_H 48
+
+#define FTP_DIR "ftp://ftp.apple.asimov.net/pub/apple_II/images/games/"
+#define FTP_HDD_DIR "ftp://ftp.apple.asimov.net/pub/apple_II/"
+#define FTP_LOCAL_DIR "/tmp"
+#define FTP_USERPASS "gala@nowhere.net"
+
+#define CONFIG_FILE "gala.conf"
+#define STARTUP_DSK "startup.dsk"
+#define USER_CONFIG_DIR ".config/gala"
+#define SDL_USEREVENT_RESTART 1
