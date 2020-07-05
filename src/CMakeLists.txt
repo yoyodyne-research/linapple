@@ -5,10 +5,13 @@ pkg_check_modules (ZLIB REQUIRED zlib)
 pkg_check_modules (CURL REQUIRED libcurl)
 pkg_check_modules (ZIP REQUIRED libzip)
 
+set (GUICHAN_LIBRARIES "-lguichan -lguichan_sdl")
+
 add_executable (
     gala
     6821.cpp
     AY8910.cpp
+    chooser.cpp
     cli.cpp
     CPU.cpp
     Debug.cpp
@@ -16,6 +19,8 @@ add_executable (
     Disk.cpp
     DiskFTP.cpp
     DiskImage.cpp
+    draw.cpp
+    font.cpp
     Frame.cpp
     ftpparse.cpp
     Harddisk.cpp
@@ -27,6 +32,7 @@ add_executable (
     Mockingboard.cpp
     MouseInterface.cpp
     ParallelPrinter.cpp
+    platform.cpp
     Registry.cpp
     Riff.cpp
     SaveState.cpp
@@ -39,6 +45,6 @@ add_executable (
     wwrapper.cpp
 )
 
-target_link_libraries (gala ${SDL_LIBRARIES} ${SDL_IMAGE_LIBRARIES} ${ZLIB_LIBRARIES} ${CURL_LIBRARIES} ${ZIP_LIBRARIES})
+target_link_libraries (${PROJECT_NAME} ${GUICHAN_LIBRARIES} ${SDL_LIBRARIES} ${SDL_IMAGE_LIBRARIES} ${ZLIB_LIBRARIES} ${CURL_LIBRARIES} ${ZIP_LIBRARIES})
 target_include_directories (gala PUBLIC ${SDL_INCLUDE_DIRS})
 target_compile_options (gala PUBLIC -Wwrite-strings ${SDL_CFLAGS_OTHER})

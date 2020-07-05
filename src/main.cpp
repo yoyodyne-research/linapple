@@ -127,14 +127,6 @@ gcn::Container* top;      // A top container
 gcn::ImageFont* font;     // A font
 gcn::Label* label;        // And a label for the Hello World text
 
-void free_and_clear(char *sz) {
-	// We hope that, after this call, you're in the free and clear.
-	if (sz) {
-		free(sz);
-		sz = NULL;
-	}
-}
-
 void ContinueExecution() {
 	static BOOL pageflipping = 0; //?
 
@@ -654,7 +646,7 @@ int openRegistry(const cli::cli_t &cli) {
 	return 0;
 }
 
-int initialize(const cli_t &cli) {
+int initialize(const cli::cli_t &cli) {
 	// Steps to take before first run.
 
 	int error;
