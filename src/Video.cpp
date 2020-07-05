@@ -28,14 +28,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 /* Adaptation for SDL and POSIX (l) by beom beotiger, Nov-Dec 2007 */
 
-#include "stdafx.h"
-#include "wwrapper.h"
 #include <SDL_image.h>
-#include "splash.xpm"
-#include "charset40.xpm"
-//#include "stretch.c"	// for SDL_SoftStretch thanx to Sam Lantinga and Tomasz Cejner
 
-//#include "..\resource\resource.h"
+#include "stdafx.h"
+#include "draw.h"
+#include "font.h"
+#include "charset40.xpm"
+#include "splash.xpm"
+#include "wwrapper.h"
 
 /* reference: technote tn-iigs-063 "Master Color Values"
 
@@ -407,9 +407,9 @@ void CreateDIBSections () {
 	rectangle(g_hStatusSurface, 2, 2, STATUS_PANEL_W - 5, STATUS_PANEL_H - 5, myyell);
 	if(font_sfc == NULL) fonts_initialization();
 	if(font_sfc != NULL) {
-		font_print(7, 6, "FDD1", g_hStatusSurface, 1.3, 1.5); // show signs
-		font_print(40, 6, "FDD2", g_hStatusSurface, 1.3, 1.5);
-		font_print(74, 6, "HDD", g_hStatusSurface, 1.3, 1.5);
+		font_print(7, 6, "FDD1", g_hStatusSurface); // show signs
+		font_print(40, 6, "FDD2", g_hStatusSurface);
+		font_print(74, 6, "HDD", g_hStatusSurface);
 	}
 // CREATE THE SOURCE IMAGE DIB SECTION
 //  HDC sourcedc = CreateCompatibleDC(dc);

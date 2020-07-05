@@ -15,7 +15,7 @@ CURL_LIBS = $(shell $(CURL_CONFIG) --libs)
 
 CXXFLAGS += $(SDL_CFLAGS)
 CXXFLAGS += $(CURL_CFLAGS)
-LDFLAGS += $(SDL_LIBS) $(CURL_LIBS) -lSDL_image -lz -lzip
+LDFLAGS += $(SDL_LIBS) $(CURL_LIBS) -lSDL_image -lz -lzip -lguichan -lguichan_sdl
 
 TARGET = gala
 

@@ -1,5 +1,5 @@
 /*
-Gala : An Apple //e (et al) emulator
+gala : An Apple //e (et al) emulator
 
 Adapted from Applewin:
 Copyright (C) 1994-1996, Michael O'Brien
@@ -7,15 +7,15 @@ Copyright (C) 1999-2001, Oliver Schmidt
 Copyright (C) 2002-2005, Tom Charlesworth
 Copyright (C) 2006-2007, Tom Charlesworth, Michael Pohoreski
 Adapted from LinApple:
+Copyright (C) 2007-2012, Krez and Beom Beotiger
 Copyright (C) 2015, Mark Ormond
-Copyright (C) 2007-2012, Krez Beotiger
 
-Gala is free software; you can redistribute it and/or modify
+gala is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
-Gala is distributed in the hope that it will be useful,
+gala is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
@@ -26,12 +26,13 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
 /*
- * Description: main() and a hodgepodge of functions not factored
- * into other modules.
+ * Description: main.cpp -- main() and a hodgepodge of functions
+ *   not factored into other modules.
  *
- * Author: Various
+ * Author: Various (see History)
  *
  * History:
+ * See README.md.
  * 2020: Significant rework of OS-facing internals and changes to UX.
  *       Geared towards future use on Raspberry Pi & RetroPie.
  *       Core still old AppleWin. "Gala".
@@ -39,10 +40,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  * 2015: LinApple was adapted in OCT 2015, as "linapple-pie",
  *       for use with Retropie, by Mark Ormond.
  * 2007-2012: "LinApple", an AppleWin adaptation for SDL and POSIX (l)
- *       by beom beotiger, Nov-Dec 2007, krez beotiger March 2012 AD.
+ *       Nov-Dec 2007, krez and beom beotiger, March 2012 AD.
  */
 
-#include "stdafx.h"
 #include <curl/curl.h>
 #include <fstream>
 #include <getopt.h>
@@ -52,16 +52,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
+#include <guichan.hpp>
+#include <guichan/sdl.hpp>
+#include "SDL.h"
 
-#include "MouseInterface.h"
+#include "stdafx.h"
 #include "cli.h"
-#include "main.h"
-
-#define CONFIG_FILE "gala.conf"
-#define STARTUP_DSK "startup.dsk"
-#define USER_CONFIG_DIR ".config/gala"
-#define SDL_USEREVENT_RESTART 1
-#define FTP_ANONYMOUS_LOGIN "anonymous:mymail@hotmail.com"
+#include "Common.h"
+#include "MouseInterface.h"
 
 typedef std::vector<std::string> stringlist_t;
 
@@ -78,6 +76,7 @@ static DWORD emulmsec_frac = 0;
 bool g_bFullSpeed = false;
 bool hddenabled = false;
 static bool g_uMouseInSlot4 = false;
+bool bBoot = true;
 
 AppMode_e g_nAppMode = MODE_LOGO;
 
@@ -91,11 +90,10 @@ TCHAR g_sHDDDir[MAX_PATH] = TEXT("");
 TCHAR g_sSaveStateDir[MAX_PATH] = TEXT("");
 TCHAR g_sParallelPrinterFile[MAX_PATH] = TEXT("Printer.txt");
 
-TCHAR g_sFTPLocalDir[MAX_PATH] =
-	TEXT(""); // FTP Local Dir, see linapple.conf for details
-TCHAR g_sFTPServer[MAX_PATH] = TEXT("");    // full path to default FTP server
-TCHAR g_sFTPServerHDD[MAX_PATH] = TEXT(""); // full path to default FTP server
-TCHAR g_sFTPUserPass[512] = TEXT(FTP_ANONYMOUS_LOGIN); // full login line
+TCHAR g_sFTPLocalDir[MAX_PATH] = TEXT(FTP_LOCAL_DIR);  // put downloaded files here
+TCHAR g_sFTPServer[MAX_PATH] = TEXT(FTP_DIR);   // full path to default FTP server
+TCHAR g_sFTPServerHDD[MAX_PATH] = TEXT(FTP_HDD_DIR);   // full path to default FTP server pseudo-root?
+TCHAR g_sFTPUserPass[512] = TEXT(FTP_USERPASS); // full login line
 
 bool g_bResetTiming = false; // Redundant
 BOOL restart = 0;
@@ -119,6 +117,23 @@ CMouseInterface sg_Mouse;
 UINT g_Slot4 = CT_Mockingboard; // CT_Mockingboard or CT_MouseInterface
 
 CURL *g_curl = NULL; // global easy curl resourse
+
+char *szImageName_drive1;
+char *szImageName_drive2;
+
+gcn::SDLGraphics* graphics;       // Graphics driver
+gcn::Gui* gui;            // A Gui object - binds it all together
+gcn::Container* top;      // A top container
+gcn::ImageFont* font;     // A font
+gcn::Label* label;        // And a label for the Hello World text
+
+void free_and_clear(char *sz) {
+	// We hope that, after this call, you're in the free and clear.
+	if (sz) {
+		free(sz);
+		sz = NULL;
+	}
+}
 
 void ContinueExecution() {
 	static BOOL pageflipping = 0; //?
@@ -160,8 +175,7 @@ void ContinueExecution() {
 
 	DiskUpdatePosition(dwExecutedCycles);
 	JoyUpdatePosition();
-	// the next call does not present	in current Applewin as on March
-	// 2012??
+	// the next call does not present in current Applewin as on March 2012??
 	VideoUpdateVbl(g_dwCyclesThisFrame);
 
 	SpkrUpdate(cyclenum);
@@ -182,14 +196,10 @@ void ContinueExecution() {
 	// CLOCKTICK
 	VideoCheckPage(0);
 	BOOL screenupdated = VideoHasRefreshed();
-	BOOL systemidle =
-		0; //(KeybGetNumQueries() > (clockgran << 2));	//  &&
-		   //(!ranfinegrain);	// TO DO
-
+	BOOL systemidle = 0;
+	
 	if (screenupdated)
 		pageflipping = 3;
-
-	//
 
 	if (g_dwCyclesThisFrame >= dwClksPerFrame) {
 		g_dwCyclesThisFrame -= dwClksPerFrame;
@@ -209,6 +219,7 @@ void ContinueExecution() {
 			if ((!anyupdates) && (!lastupdates[0]) &&
 			    (!lastupdates[1]) && VideoApparentlyDirty()) {
 				VideoCheckPage(1);
+				//gui->draw();
 				static DWORD lasttime = 0;
 				DWORD currtime = GetTickCount();
 				if ((!g_bFullSpeed) ||
@@ -322,7 +333,8 @@ void LoadConfiguration(const cli::cli_t &cli) {
 	char *sz = NULL;
 	DWORD dwTmp = 0; // temp var
 	char *home = getenv("HOME");
-
+	int error;
+	
 	// Machine type
 
 	DWORD dwComputerType;
@@ -438,47 +450,39 @@ void LoadConfiguration(const cli::cli_t &cli) {
 	// Floppy drive image
 
 	dwTmp = 0;
+	szImageName_drive1 = NULL;
 	LOAD(TEXT("Slot 6 Autoload"), &dwTmp);
 	if (cli.imagefile) {
-		DiskInsert(0, cli.imagefile, 0, 0);
-		std::cerr << "[info ] Drive 1: " << cli.imagefile << std::endl;
-
-	} else if (dwTmp) {
-		if (RegLoadString(TEXT("Configuration"),
-				  TEXT(REGVALUE_DISK_IMAGE1), 1, &sz,
-				  MAX_PATH)) {
-			DiskInsert(0, sz, 0, 0);
-			std::cerr << "[info ] Drive 1: " << sz << std::endl;
-			free_and_clear(sz);
-		}
-
+		szImageName_drive1 = cli.imagefile;
+	} else if (RegLoadString(TEXT("Configuration"),
+				 TEXT(REGVALUE_DISK_IMAGE1), 1, &szImageName_drive1,
+				 MAX_PATH)) {
 	} else {
 		struct stat statbuf;
 		std::string filename(STARTUP_DSK);
+ 		std::string path;
 		bool found = false;
 		stringlist_t searchpaths = {
 			".",
 			std::string(getenv("HOME")) + "/" + USER_CONFIG_DIR,
-			// TODO put ../share/linapple here...
 			"/usr/local/share/gala", "/usr/share/gala"};
-		std::string path;
 		for (stringlist_t::iterator it = searchpaths.begin();
 		     it != searchpaths.end(); it++) {
 			path = *it + "/" + filename;
 			if (!stat(path.c_str(), &statbuf)) {
 				found = true;
-				DiskInsert(0, path.c_str(), 0, 0);
-				std::cerr << "[info ] Drive 1: " << path
-					  << std::endl;
+				szImageName_drive1 = (char *)malloc(sizeof(char) * path.size() + 1);
+				strcpy(szImageName_drive1, path.c_str());
 				break;
 			}
 		}
-
 		if (!found)
 			std::cerr << "[warn ] Startup disk not found"
 				  << std::endl;
 	}
-
+	if (error)
+		std::cerr << "[error] failure inserting disk for drive 1" << std::endl;
+	
 	if (cli.imagefile2) {
 		DiskInsert(1, cli.imagefile2, 0, 0);
 		std::cerr << "[info ] Drive 2: " << cli.imagefile2 << std::endl;
@@ -573,7 +577,7 @@ void LoadConfiguration(const cli::cli_t &cli) {
 		strcpy(g_sSaveStateDir, home);
 
 	// FTP
-
+#if 0
 	RegLoadString(TEXT("Preferences"), REGVALUE_FTP_DIR, 1, &sz, MAX_PATH);
 	if (sz) {
 		strcpy(g_sFTPServer, sz);
@@ -603,17 +607,13 @@ void LoadConfiguration(const cli::cli_t &cli) {
 		free(sz);
 		sz = NULL;
 	}
-
+#endif
 	// Boot?
 
 	dwTmp = 0;
 	LOAD(TEXT("Boot at Startup"), &dwTmp);
-	if (!dwTmp) {
-		SDL_Event user_ev;
-		user_ev.type = SDL_USEREVENT;
-		user_ev.user.code = SDL_USEREVENT_RESTART;
-		SDL_PushEvent(&user_ev);
-	}
+	if (dwTmp)
+		bBoot = true;
 }
 
 int openRegistry(const cli::cli_t &cli) {
@@ -654,13 +654,17 @@ int openRegistry(const cli::cli_t &cli) {
 	return 0;
 }
 
-int initialize() {
+int initialize(const cli_t &cli) {
 	// Steps to take before first run.
 
 	int error;
 
 	if (error = InitSDL())
 		return error;
+	SDL_EnableUNICODE(1);
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+	LoadConfiguration(cli);
+	FrameCreateWindow();
 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 	g_curl = curl_easy_init();
@@ -684,11 +688,10 @@ int initialize() {
 
 void start(cli::cli_t &cli) {
 	// Steps to take before a machine run.
-
+	int error;
+	
 	restart = 0;
 	g_nAppMode = MODE_LOGO;
-	LoadConfiguration(cli);
-	FrameCreateWindow();
 	if (!DSInit())
 		soundtype = SOUND_NONE; // Direct Sound and Stuff
 	MB_Initialize();		// Mocking board
@@ -699,7 +702,29 @@ void start(cli::cli_t &cli) {
 	HD_SetEnabled(hddenabled ? true : false);
 	VideoInitialize();
 	Snapshot_Startup(); // Do this after everything has been init'ed
+
+	if (szImageName_drive1) {
+		error = DiskInsert(0, szImageName_drive1, 0, 0);
+		if (error) {
+			std::cerr << "Cannot insert image " <<  szImageName_drive1 << " into drive 1.";
+		}
+	}
+	if (szImageName_drive2) {
+		error |= DiskInsert(1, szImageName_drive2, 0, 0);
+		if (error) {
+			LOG("Cannot insert image %s into drive 2.", szImageName_drive2);
+		}
+	}
+
 	JoyReset();
+
+	if (bBoot) {
+		SDL_Event user_ev;
+		user_ev.type = SDL_USEREVENT;
+		user_ev.user.code = SDL_USEREVENT_RESTART;
+		SDL_PushEvent(&user_ev);
+	}
+	
 	SetUsingCursor(0);
 	if (disablecursor)
 		SDL_ShowCursor(SDL_DISABLE);
@@ -755,6 +780,36 @@ void uninitialize() {
 	curl_global_cleanup();
 }
 
+void initchan() {
+	top = new gcn::Container();
+	top->setDimension(gcn::Rectangle(0, 0, g_ScreenWidth, g_ScreenHeight));
+
+	gui = new gcn::Gui();
+	gui->setGraphics(graphics);
+	gui->setTop(top);
+
+//	font = new gcn::ImageFont("fixedfont_big.bmp", " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+//	gcn::Widget::setGlobalFont(font);
+
+//	label = new gcn::Label("Hello World");
+//	label->setPosition(280, 220);
+//	top->add(label);
+}
+
+void haltchan() {
+	delete label;
+	delete font;
+	delete top;
+	delete gui;
+
+	/*
+	 * Destroy Guichan SDL stuff
+	 */
+//	delete input;
+	delete graphics;
+//	delete imageLoader;
+}
+
 int main(int argc, char *argv[]) {
 	cli::cli_t cli;
 	int error = parseCommandLine(argc, argv, &cli);
@@ -763,14 +818,15 @@ int main(int argc, char *argv[]) {
 			return 0;
 		return error;
 	}
-
+	
 	error = openRegistry(cli);
 	if (error)
 		return error;
 
-	error = initialize();
+	error = initialize(cli);
 	if (error)
 		return error;
+	// initchan();
 
 	do {
 		start(cli);
@@ -785,5 +841,7 @@ int main(int argc, char *argv[]) {
 	} while (restart);
 
 	uninitialize();
+	// haltchan();
+	
 	return 0;
 }
